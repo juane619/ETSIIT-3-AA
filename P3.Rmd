@@ -31,4 +31,4 @@ labels_train   = data.matrix(subset(train, select = digit))
 features_test  = data.matrix(subset(test,  select = -digit))
 labels_test    = data.matrix(subset(test,  select = digit))
 ```
-prob
+proban
