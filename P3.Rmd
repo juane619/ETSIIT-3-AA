@@ -31,6 +31,7 @@ labels_train   = data.matrix(subset(train, select = digit))
 features_test  = data.matrix(subset(test,  select = -digit))
 labels_test    = data.matrix(subset(test,  select = digit))
 ```
+<<<<<<< HEAD
 
 
 - Tenemos que encontrar la manera de descubrir que características son importantes pues el dataset básicamente son píxeles y son muy redundantes (15 16 16 -> Se podría resumir en 16)
@@ -60,3 +61,6 @@ modelo_clasificacion = glm(formula = labels_train ~ features_train,
                            data = train,
                            mustart = NULL)
 ```
+=======
+proban
+>>>>>>> cdd1ffc2b07924f03b008991d6297a83e09df93f
