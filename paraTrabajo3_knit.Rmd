@@ -20,7 +20,7 @@ Gas mileage, horsepower, and other information for cars.
 
 ```{r}
 #install.packages("ISLR")
-library("ISLR", lib.loc="C:/Program Files/R/R-3.4.4/library")
+library("ISLR", lib.loc="C:/Users/juane/R/win-library/3.4")
 data("Auto")   # loads the dataset
 ```
 
@@ -45,7 +45,7 @@ boxplot(mpg~cut(horsepower, breaks = 10),data = Auto)
 
 ```{r}
 attach ( Auto )  # para simplificar y prescindir del prefijo Auto 
-#pairs(~ .,data = Auto)  # todos con todos
+pairs(~ .,data = Auto)  # todos con todos
 pairs(~ mpg + cylinders + displacement + horsepower + weight + acceleration + year + origin, data= Auto)
  # solo algunas
 
@@ -262,10 +262,10 @@ Se explica mpg01 mediante los atributos weight, horsepower y displacement.
 
 
 ```{r}
-ml1 = glm(mpg01 ~ weight + horsepower + displacement,
+ml1 = glm(mpg01 ~ .,
   family = binomial(logit), data = Auto2, subset=train)
-summary(ml1)
 
+summary(ml1)
 ```
 
 Una vez aprendido, veamos cÃ³mo predice...
@@ -303,7 +303,7 @@ Es mejor clasificador, cuanto mayor sea el Ã¡rea debajo de la curva.
 
 ```{r}
 #install.packages("ROCR")
-library("ROCR", lib.loc="C:/Program Files/R/R-3.4.4/library")
+library("ROCR", lib.loc="C:/Users/juane/R/win-library/3.4")
 pred1 = prediction(probTstml1,Auto2[-train,1])
 perf1 = performance(pred1,"tpr","fpr")
 plot(perf1, main="conjunto de test")#,add=TRUE) # pinta la curva
@@ -316,7 +316,7 @@ probTstml2 = predict(ml2, data.frame(Auto2[-train,-1]), type="response")
 pred2 = prediction(probTstml2,Auto2[-train,1])
 perf2 = performance(pred2,"tpr","fpr")
 legend(0.6,0.6,c("ML1","ML2"),col=c(2,3),lwd=3
-#plot(perf2,lty=3, col="blue",add=TRUE)) # pinta la curva
+plot(perf2,lty=3, col="blue",add=TRUE)) # pinta la curva
 ```
 
 
