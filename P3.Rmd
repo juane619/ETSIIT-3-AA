@@ -15,10 +15,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### 1. Comprender el problema a resolver
 
-El problema en si trata de ajustar un modelo lineal sobre dicha base de datos para decidir si un d√?gito es un n√∫mero entre {0,1,..,9} escritos a mano, es decir, estamos ante un problema de clasificaci√≥n multi clase (10 clases).
-Los conjuntos se generaron dividiendo cada d√?gito en una matriz de 8x8 y calculando un valor de escala de grises de 0 a 16 para cada celda de la matriz promediando sus p√?xeles. Los datos entonces tienen 64 columnas para cada uno de los valores de escala de grises y una ultima columna (65) con el d√?gito real.
+El problema en si trata de ajustar un modelo lineal sobre dicha base de datos para decidir si un d??gito es un n√∫mero entre {0,1,..,9} escritos a mano, es decir, estamos ante un problema de clasificaci√≥n multi clase (10 clases).
+Los conjuntos se generaron dividiendo cada d??gito en una matriz de 8x8 y calculando un valor de escala de grises de 0 a 16 para cada celda de la matriz promediando sus p??xeles. Los datos entonces tienen 64 columnas para cada uno de los valores de escala de grises y una ultima columna (65) con el d??gito real.
 
-Una manera de resolver este problema podr√?a ser crear 10 clasificadores donde cado uno clasifica entre un d√?gito y los dem√°s.
+Una manera de resolver este problema podr??a ser crear 10 clasificadores donde cado uno clasifica entre un d??gito y los dem√°s.
 
 ```{r}
 train = read.csv("datos/optdigits_tra.csv", header = FALSE)
@@ -32,9 +32,9 @@ features_test  = data.matrix(subset(test,  select = -digit))
 labels_test    = data.matrix(subset(test,  select = digit))
 ```
 
-- Tenemos que encontrar la manera de descubrir que caracter√?sticas son importantes pues el dataset b√°sicamente son p√?xeles y son muy redundantes (15 16 16 -> Se podr√?a resumir en 16)
+- Tenemos que encontrar la manera de descubrir que caracter??sticas son importantes pues el dataset b√°sicamente son p??xeles y son muy redundantes (15 16 16 -> Se podr??a resumir en 16)
 
-- Con esto se da la misma prioridad a cada caracter√?stica, antes deberiamos de eliminar pixeles redundantes como se ha especificado antes:
+- Con esto se da la misma prioridad a cada caracter??stica, antes deberiamos de eliminar pixeles redundantes como se ha especificado antes:
 ```{r Normalization}
 
 normalized<-function(data) {
@@ -57,12 +57,16 @@ train=as.data.frame(cbind(labels_train, features_train))
 train
 ```
 
-- Con esta funci√≥n se puede implementar regresi√≥n log√?stica de manera muy sencilla pero no se si podremos usarla.
+- Con esta funci√≥n se puede implementar regresi√≥n log??stica de manera muy sencilla pero no se si podremos usarla.
 
 - Falta poner la media de comienzo mustart
 
 ```{r Logistic Regression}
 http://mlbernauer.github.io/R/20150225_coursera_ml_multiclass_classification_logistic_regression.html
+
+Usar softmax o uno contra todos, ajustar el landa en un rango de valores establecido previamente y explicar el porque de esta decisi√≥n, una vez tenemos el lambda se lo pasamos a la funci√≥n de regresi√≥n log√≠sitca y explicamos que dicha funci√≥n regulariza internamente (penaliza caracteristicas)
+
+MIRAR LA DOCUMENTACI√ìN DE LA LIBRERIA GLMNET
 
 Preguntar: sin usar glmnet, solo glm, si ajustar uno a uno (cero con todos, sucesivamente) debe de ir bien sin quitar ninguna feature o no??
     usando glmnet (reg logistic con regularization) debemos de ajustar el lambda antes o no??
