@@ -19,19 +19,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### 1. Comprender el problema a resolver
 
-<<<<<<< HEAD
 El problema en si trata de ajustar un modelo lineal sobre dicha base de datos para decidir si un digito es un número entre {0,1,..,9} escritos a mano, es decir, estamos ante un problema de clasificación multi clase (10 clases).
 Los conjuntos se generaron dividiendo cada digito en una matriz de 8x8 y calculando un valor de escala de grises de 0 a 16 para cada celda de la matriz promediando sus pixeles. Los datos entonces tienen 64 columnas para cada uno de los valores de escala de grises y una ultima columna (65) con el digito real.
 
 Una manera de resolver este problema podria ser crear 10 clasificadores donde cado uno clasifica entre un digito y los demás y asi con todas las clases. Otra manera podría ser utilizando Softmax, es decir, 
 
 ### 2. Preprocesamiento de los datos.
-=======
-El problema en si trata de ajustar un modelo lineal sobre dicha base de datos para decidir si un d??gito es un número entre {0,1,..,9} escritos a mano, es decir, estamos ante un problema de clasificación multi clase (10 clases).
-Los conjuntos se generaron dividiendo cada d??gito en una matriz de 8x8 y calculando un valor de escala de grises de 0 a 16 para cada celda de la matriz promediando sus p??xeles. Los datos entonces tienen 64 columnas para cada uno de los valores de escala de grises y una ultima columna (65) con el d??gito real.
-
-Una manera de resolver este problema podr??a ser crear 10 clasificadores donde cado uno clasifica entre un d??gito y los demás.
->>>>>>> 2706f791843928d7bb0e875fa04133fdc3e8fc07
 
 Se leen los datos, dividiendo estos en el conjunto para entrenamiento "train" y en otro conjunto para el test "test".
 ```{r}
@@ -46,14 +39,8 @@ features_test  = data.matrix(subset(test,  select = -digit))
 labels_test    = data.matrix(subset(test,  select = digit))
 ```
 
-<<<<<<< HEAD
 Se deben normalizar los datos ya que no es igual considerar los mínimos y máximos globales (dataset completo) que considerar los de cada conjunto, es decir, pudiera ser que se "envenenaran" los conjuntos.
 
-=======
-- Tenemos que encontrar la manera de descubrir que caracter??sticas son importantes pues el dataset básicamente son p??xeles y son muy redundantes (15 16 16 -> Se podr??a resumir en 16)
-
-- Con esto se da la misma prioridad a cada caracter??stica, antes deberiamos de eliminar pixeles redundantes como se ha especificado antes:
->>>>>>> 2706f791843928d7bb0e875fa04133fdc3e8fc07
 ```{r Normalization}
 
 normalized<-function(data) {
@@ -73,28 +60,13 @@ features_train = apply(features_train,2,normalized)
 features_test = apply(features_test,2,normalized)
 ```
 
-<<<<<<< HEAD
 ### 3. Selección de clases de funciones a usar.
-=======
-- Con esta función se puede implementar regresión log??stica de manera muy sencilla pero no se si podremos usarla.
->>>>>>> 2706f791843928d7bb0e875fa04133fdc3e8fc07
 
 Usaremos (ajustaremos) un modelo de regresión LASSO (R-LASSO). Este modelo de regresión lineal selecciona las variables con coeficiente mayor de un umbral prefijado. La ventaja de este modelo es que es una técnica de regresión lineal ya regularizada, es decir, penaliza variables que no dicen nada acerca de la salida, disminuyendo el correspondiente sobreajuste que esto pudiera ocasionar y además reduciendo el error fuera de la muestra.
 
 El hiperparámetro lambda: vamos a estimar el mejor lambda mediante validacion cruzada. El mejor lambda es aquél que penaliza minimizando el error de validacion cruzada, es decir, cvm.
 
-<<<<<<< HEAD
 El paquete **glmnet** de R nos permite aplicar todo lo antes mencionado.
-=======
-Usar softmax o uno contra todos, ajustar el landa en un rango de valores establecido previamente y explicar el porque de esta decisión, una vez tenemos el lambda se lo pasamos a la función de regresión logísitca y explicamos que dicha función regulariza internamente (penaliza caracteristicas)
-
-MIRAR LA DOCUMENTACIÓN DE LA LIBRERIA GLMNET
-
-Preguntar: sin usar glmnet, solo glm, si ajustar uno a uno (cero con todos, sucesivamente) debe de ir bien sin quitar ninguna feature o no??
-    usando glmnet (reg logistic con regularization) debemos de ajustar el lambda antes o no??
-    hay que hacer uno contra todos 10 veces??
-    si hallamos lambda antes(cross validation) y usamos glmnet, debemos de ajustar uno contra todos 10 veces??
->>>>>>> 2706f791843928d7bb0e875fa04133fdc3e8fc07
 
 ```{r}
 library(glmnet)
