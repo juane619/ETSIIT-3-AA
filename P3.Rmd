@@ -68,6 +68,9 @@ El hiperparámetro lambda: vamos a estimar el mejor lambda mediante validacion c
 
 El paquete **glmnet** de R nos permite aplicar todo lo antes mencionado.
 
+**glmnet** es un set de procedimientos extremadamente eficientes para ajustar todo el procedimiento de regularización lasso (también puede hacer elastic-net pero usaremos solo lasso) para regresión lineal, modelos de regresión logística y multinomial (nuestro caso), regresión de Poisson y el modelo de Cox.
+Los algoritmos que contiene usan lo que se conoce como descenso cíclico coordinado, que optimiza sucesivamente la función objetivo sobre cada parámetro con otro fijos y cicla hasta que converge.
+
 ```{r}
 library(glmnet)
 
@@ -92,7 +95,7 @@ print ( paste ("El mejor lambda es:", best_lambda))
 ```
 
 Los anteriores gráficos (uno para cada clase) muestran los valores que toma lambda por cada variable predictora. A nosotros solo nos interesan aquellas que esten por encima de un umbral definido por nosotros. La linea naranja es dicho umbral, el mejor lambda. Las lineas que superan dicho umbral son aquellas variables que son mas significativas para ajustar el modelo.
-Cuando la norma L1 (ejeX) es baja todas las variables nos dicen lo mismo (estimador nulo o aleatorio).
+Cuando la norma L1 (ejeX) es baja, todas las variables nos dicen lo mismo (estimador nulo o aleatorio, es decir, el modelo no sabe nada realmente).
 
 ```{r}
 #Ajuste del modelo
@@ -112,10 +115,24 @@ pred_lasso_test=predict(cvfit, newx = features_test, type= "class", s="lambda.mi
 #pred_lasso$`0`>best_lambda
 
 aciertos_train=pred_lasso_train==labels_train
-length(aciertos[aciertos_train==TRUE])
+print(sprintf("El procentaje de acierto en train es %s", (length(aciertos_train[aciertos_train==TRUE]) / length(aciertos_train)) * 100))
 
 aciertos_test=pred_lasso_test==labels_test
-length(aciertos_test[aciertos_test==TRUE])
+print(sprintf("El procentaje de acierto en test es %s", (length(aciertos_test[aciertos_test==TRUE]) / length(aciertos_test)) * 100))
 
 ```
+
+
+Explicación de los parámetros de la función cv.glmnet:
+
+lambda -> Son los valores de lambda usados para ajustar
+cvm -> La media de los errores de validación cruzada (cross validation measure), es un vector de tamaño length(lambda)
+cvsd -> Cross validation standard error de cvm, es la estimación del error estandar de cvm
+cvup -> Curva superior que básicamente es cvm+csvd
+cvlo -> Curva inferior que es básicamente cvm-csvd
+nzero-> Cantidad de coeficientes que nos son cero con cada lambda (VALOR IMPORTANTE)
+glmnet.fit -> Un objeto ajustado para todos los datos dados
+lambda.min -> Valor del lambda que hace mínimo cvm
+lambda.1se -> Mayor valor de lambda tal que el error estandarizado esta dentro de 1
+
 
