@@ -62,7 +62,21 @@ features_test = apply(features_test,2,normalized)
 
 ### 3. Selección de clases de funciones a usar.
 
-Usaremos (ajustaremos) un modelo de regresión LASSO (R-LASSO). Este modelo de regresión lineal selecciona las variables con coeficiente mayor de un umbral prefijado. La ventaja de este modelo es que es una técnica de regresión lineal ya regularizada, es decir, penaliza variables que no dicen nada acerca de la salida, disminuyendo el correspondiente sobreajuste que esto pudiera ocasionar y además reduciendo el error fuera de la muestra.
+Utilizaremos Regresión Logística ya que es un modelo muy usado cuando la respuesta es categórica (exactamente nuestro problema). Como nuestro modelo tiene 10 posibles salidas, nosotros usaremos el tipo de modelo multinomial.
+
+Para este tipo de modelo suponemos que la variable de salida K tiene 10 clases: G={0,1,...,9}.
+
+Una vez conocido nuestro problema y preprocesado los datos, nuestro modelo es el siguiente:
+
+$\mbox{Pr}(G=k|X=x)=\frac{e^{\beta_{0k}+\beta_k^Tx}}{\sum_{\ell=1}^Ke^{\beta_{0\ell}+\beta_\ell^Tx}}$
+
+Como vemos, utiliza la regla Softmax para clasificación multilabel (extension de la clasificacion binaria).
+
+Tenemos la matriz Y NxK, donde $y_{i\ell} = I(g_i=\ell)$, por tanto, la funcion de verosimilitud ya penalizada con LASSO es $\ell(\{\beta_{0k},\beta_{k}\}_1^K) = -\left[\frac{1}{N} \sum_{i=1}^N \Big(\sum_{k=1}^Ky_{il} (\beta_{0k} + x_i^T \beta_k)- \log \big(\sum_{k=1}^K e^{\beta_{0k}+x_i^T \beta_k}\big)\Big)\right] +\lambda \left[ (1-\alpha)||\beta||_F^2/2 + \alpha\sum_{j=1}^p||\beta_j||_q\right]$
+
+Como vemos en dicha funcion, el parametro $\alpha$ define si la penalizacion es LASSO, RIDGE o ambas (elastic-net), nosotros en nuestro problema solo utilizaremos LASSO, es decir, con el parámetro $\alpha=1$, es decir, os quedamos con la parte de $\alpha\sum_{j=1}^p||\beta_j||_q\right]$(lasso) y descartamos la parte $(1-\alpha)||\beta||_F^2/2$ (ridge).
+
+En concreto, usaremos (ajustaremos) un modelo de regresión LASSO (R-LASSO). Este modelo de regresión lineal selecciona las variables con coeficiente mayor de un umbral prefijado. La ventaja de este modelo es que es una técnica de **regresión lineal ya regularizada**, es decir, como los datos de entrada son pixeles, es decir, pueden llegar a ser muy redundantes, dicho modelo ya penaliza variables que no dicen nada acerca de la salida, disminuyendo el correspondiente sobreajuste que esto pudiera ocasionar y además reduciendo el error fuera de la muestra.
 
 El hiperparámetro lambda: vamos a estimar el mejor lambda mediante validacion cruzada. El mejor lambda es aquél que penaliza minimizando el error de validacion cruzada, es decir, cvm.
 
@@ -80,7 +94,9 @@ registerDoParallel(cores=8)
 
 # Elegimos el mejor lambda por CV de, por ejemplo, 10 particiones (por defecto). Si utilizaramos tantas particiones como numero de muestras que tenemos, estariamos hablando de leave-one-out CV, en este caso no es recomendable por el tamaño del dataset.
 
-cvfit=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE)
+#Ajuste del modelo
+
+cvfit=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE, nfolds = 3)
 
 best_lambda=cvfit$lambda.min
 
@@ -90,7 +106,7 @@ plot(cvfit)
 plot(cvfit$glmnet.fit, "norm")
 abline(h=best_lambda, col= "orange", lty=4, lwd=3)
 
-print ( paste ("El mejor lambda es:", best_lambda))
+paste ("El mejor lambda es:", best_lambda)
 
 ```
 
@@ -98,29 +114,22 @@ Los anteriores gráficos (uno para cada clase) muestran los valores que toma lam
 Cuando la norma L1 (ejeX) es baja, todas las variables nos dicen lo mismo (estimador nulo o aleatorio, es decir, el modelo no sabe nada realmente).
 
 ```{r}
-#Ajuste del modelo
-
-# El parámetro alpha: cuando el valor es 1 (por defecto) indica Lasso, cuando es 0, indica Ridge.
-#En este caso se indica familiy="multinomial" porque estamos ante un problema multiclase.
-
-m_lasso=glmnet(features_train,labels_train, family = "multinomial")
-
-best_lambda=min(m_lasso$lambda)
-
+# Predicciones
 pred_lasso_train=predict(cvfit, newx = features_train, type= "class", s="lambda.min")
 
 pred_lasso_test=predict(cvfit, newx = features_test, type= "class", s="lambda.min")
 
 #Variables mas significativas
-#pred_lasso$`0`>best_lambda
+#cvfit$`1`>best_lambda
 
 aciertos_train=pred_lasso_train==labels_train
-print(sprintf("El procentaje de acierto en train es %s", (length(aciertos_train[aciertos_train==TRUE]) / length(aciertos_train)) * 100))
+sprintf("El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
 
 aciertos_test=pred_lasso_test==labels_test
-print(sprintf("El procentaje de acierto en test es %s", (length(aciertos_test[aciertos_test==TRUE]) / length(aciertos_test)) * 100))
+sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
 
 ```
+
 
 
 Explicación de los parámetros de la función cv.glmnet:
