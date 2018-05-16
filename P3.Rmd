@@ -26,19 +26,6 @@ Una manera de resolver este problema podria ser crear 10 clasificadores donde ca
 
 ### 2. Preprocesamiento de los datos.
 
-Se leen los datos, dividiendo estos en el conjunto para entrenamiento "train" y en otro conjunto para el test "test".
-```{r}
-train = read.csv("datos/optdigits_tra.csv", header = FALSE)
-names(train)[65] = "digit"
-test = read.csv("datos/optdigits_tes.csv", header = FALSE)
-names(test)[65] = "digit"
-
-features_train = data.matrix(subset(train, select = -digit))
-labels_train   = data.matrix(subset(train, select = digit))
-features_test  = data.matrix(subset(test,  select = -digit))
-labels_test    = data.matrix(subset(test,  select = digit))
-```
-
 Se deben normalizar los datos ya que no es igual considerar los mínimos y máximos globales (dataset completo) que considerar los de cada conjunto, es decir, pudiera ser que se "envenenaran" los conjuntos.
 
 ```{r Normalization}
@@ -56,15 +43,15 @@ normalized<-function(data) {
   return(data)
 }
 
-features_train = apply(features_train,2,normalized)
-features_test = apply(features_test,2,normalized)
 ```
 
 ### 3. Selección de clases de funciones a usar.
 
-Utilizaremos Regresión Logística ya que es un modelo muy usado cuando la respuesta es categórica (exactamente nuestro problema). Como nuestro modelo tiene 10 posibles salidas, nosotros usaremos el tipo de modelo multinomial.
+Utilizaremos Regresión Logística ya que dicho modelo es muy usado cuando la respuesta es categórica (exactamente nuestro problema). Como nuestro modelo tiene 10 posibles salidas, nosotros usaremos el tipo de modelo Multinomial que es una generalizacion del metodo de regresion logistica para problemas multiclase.
 
-Para este tipo de modelo suponemos que la variable de salida K tiene 10 clases: G={0,1,...,9}.
+El modelo predice las probabilidades de los diferentes resultados posibles de una distribucion categorica como variable independiente, dado un conjunto de variables independientes.
+
+Para este tipo de modelo la variable de salida K tiene 10 clases: G={0,1,...,9}.
 
 Una vez conocido nuestro problema y preprocesado los datos, nuestro modelo es el siguiente:
 
@@ -74,7 +61,32 @@ Como vemos, utiliza la regla Softmax para clasificación multilabel (extension d
 
 Tenemos la matriz Y NxK, donde $y_{i\ell} = I(g_i=\ell)$, por tanto, la funcion de verosimilitud ya penalizada con LASSO es $\ell(\{\beta_{0k},\beta_{k}\}_1^K) = -\left[\frac{1}{N} \sum_{i=1}^N \Big(\sum_{k=1}^Ky_{il} (\beta_{0k} + x_i^T \beta_k)- \log \big(\sum_{k=1}^K e^{\beta_{0k}+x_i^T \beta_k}\big)\Big)\right] +\lambda \left[ (1-\alpha)||\beta||_F^2/2 + \alpha\sum_{j=1}^p||\beta_j||_q\right]$
 
-Como vemos en dicha funcion, el parametro $\alpha$ define si la penalizacion es LASSO, RIDGE o ambas (elastic-net), nosotros en nuestro problema solo utilizaremos LASSO, es decir, con el parámetro $\alpha=1$, es decir, os quedamos con la parte de $\alpha\sum_{j=1}^p||\beta_j||_q\right]$(lasso) y descartamos la parte $(1-\alpha)||\beta||_F^2/2$ (ridge).
+Como vemos en dicha funcion, el parametro $\alpha$ define si la penalizacion es LASSO, RIDGE o ambas (elastic-net), nosotros en nuestro problema solo utilizaremos LASSO, es decir, con el parámetro $\alpha=1$, es decir, nos quedamos con la parte de $\alpha\sum_{j=1}^p||\beta_j||_q\right]$(lasso) y descartamos la parte $(1-\alpha)||\beta||_F^2/2$ (ridge).
+
+### 4. Conjuntos de training, validacion y test usados.
+
+Como los datos ya nos vienen correctamente divididos en train y test, procedemos a su lectura y a la descomposición para tener correctamente identificadas y separadas las características y las etiquetas de cada conjunto de datos (train y test). El conjunto de validación lo explicamos en la siguiente sección.
+
+```{r}
+train = read.csv("datos/optdigits_tra.csv", header = FALSE)
+names(train)[65] = "digit"
+test = read.csv("datos/optdigits_tes.csv", header = FALSE)
+names(test)[65] = "digit"
+
+features_train = data.matrix(subset(train, select = -digit))
+labels_train   = data.matrix(subset(train, select = digit))
+features_test  = data.matrix(subset(test,  select = -digit))
+labels_test    = data.matrix(subset(test,  select = digit))
+```
+
+Ahora con la función definida antes, normalizamos las características:
+
+```{r}
+features_train = apply(features_train,2,normalized)
+features_test = apply(features_test,2,normalized)
+```
+
+### 5. Regularización, modelo a usar e hyperparámetros.
 
 En concreto, usaremos (ajustaremos) un modelo de regresión LASSO (R-LASSO). Este modelo de regresión lineal selecciona las variables con coeficiente mayor de un umbral prefijado. La ventaja de este modelo es que es una técnica de **regresión lineal ya regularizada**, es decir, como los datos de entrada son pixeles, es decir, pueden llegar a ser muy redundantes, dicho modelo ya penaliza variables que no dicen nada acerca de la salida, disminuyendo el correspondiente sobreajuste que esto pudiera ocasionar y además reduciendo el error fuera de la muestra.
 
@@ -82,8 +94,10 @@ El hiperparámetro lambda: vamos a estimar el mejor lambda mediante validacion c
 
 El paquete **glmnet** de R nos permite aplicar todo lo antes mencionado.
 
-**glmnet** es un set de procedimientos extremadamente eficientes para ajustar todo el procedimiento de regularización lasso (también puede hacer elastic-net pero usaremos solo lasso) para regresión lineal, modelos de regresión logística y multinomial (nuestro caso), regresión de Poisson y el modelo de Cox.
-Los algoritmos que contiene usan lo que se conoce como descenso cíclico coordinado, que optimiza sucesivamente la función objetivo sobre cada parámetro con otro fijos y cicla hasta que converge.
+**glmnet** es un set de procedimientos extremadamente eficientes para ajustar todo el procedimiento de regularización lasso (también puede hacer elastic-net pero usaremos solo lasso) para regresión lineal, modelos de regresión logística multinomial (nuestro caso), regresión de Poisson y el modelo de Cox.
+Los algoritmos que contiene usan lo que se conoce como descenso cíclico coordinado, que optimiza sucesivamente la función objetivo sobre cada parámetro con otros fijos y cicla hasta que converge.
+
+Ahora hablemos del **conjunto de validación**: usaremos la funcin cv.glmnet() para ajustar el modelo usando cross-validation. Por defecto, el metodo divide el conjunto de entrenamiento antes creado en 10 trozos no superpuestos de aproximadamente el mismo tamaño, utilizando el primero de ellos como **validacion** y el resto se usa para el ajuste.
 
 ```{r}
 library(glmnet)
@@ -96,7 +110,7 @@ registerDoParallel(cores=8)
 
 #Ajuste del modelo
 
-cvfit=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE, nfolds = 3)
+cvfit=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE, nfolds = 5)
 
 best_lambda=cvfit$lambda.min
 
@@ -112,6 +126,39 @@ paste ("El mejor lambda es:", best_lambda)
 
 Los anteriores gráficos (uno para cada clase) muestran los valores que toma lambda por cada variable predictora. A nosotros solo nos interesan aquellas que esten por encima de un umbral definido por nosotros. La linea naranja es dicho umbral, el mejor lambda. Las lineas que superan dicho umbral son aquellas variables que son mas significativas para ajustar el modelo.
 Cuando la norma L1 (ejeX) es baja, todas las variables nos dicen lo mismo (estimador nulo o aleatorio, es decir, el modelo no sabe nada realmente).
+
+Explicación de los parámetros de la función cv.glmnet:
+
+lambda -> Son los valores de lambda usados para ajustar
+cvm -> La media de los errores de validación cruzada (cross validation measure), es un vector de tamaño length(lambda)
+cvsd -> Cross validation standard error de cvm, es la estimación del error estandar de cvm
+cvup -> Curva superior que básicamente es cvm+csvd
+cvlo -> Curva inferior que es básicamente cvm-csvd
+nzero-> Cantidad de coeficientes que nos son cero con cada lambda (VALOR IMPORTANTE)
+glmnet.fit -> Un objeto ajustado para todos los datos dados
+lambda.min -> Valor del lambda que hace mínimo cvm
+lambda.1se -> Mayor valor de lambda tal que el error estandarizado esta dentro de 1
+
+### 8. Métrica
+
+Una vez ajustado el modelo, es momento de medir nuestro modelo. Como métrica hemos decidido usar **matriz de confusión** ya que nos permite mostrar de forma explicita cuando una clase es confundida con otra (falsos positivos/negativos), es decir, permite trabajar de forma separada con distintos tipos de error.
+
+```{r}
+# Predicciones
+pred_lasso_train=predict(cvfit, newx = features_train, type= "class", s="lambda.min")
+
+confusionMatrix(data = as.factor(pred_lasso_train), reference = as.factor(labels_train))
+
+```
+La lectura de la matriz nos muestra como el modelo ha predicho muy bien las distintas muestras de train, clasificando erroneamente muy pocos digitos respecto al tamaño del conjunto.
+
+Como vemos, tenemos varias métricas obtenidas a través de la matriz de confusión que nos seran muy utiles para medir nuestro modelo:
+-   precision: numero de predicciones correctas entre el numero total de predicciones.
+-   Sensibildiad y especifidad: valores que indican la capacidad de nuestro estimador para discriminar los casos positivos de los negativos. La sensibilidad se puede decir que es la tasa de verdaderos positivos. La especificidad como la tasa de verdaderos negativos.
+
+### 9. Estimacion del error Eout.
+
+Veamos como se comporta nuestro modelo:
 
 ```{r}
 # Predicciones
@@ -130,18 +177,6 @@ sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[acier
 
 ```
 
+### 10. Calidad del modelo
 
-
-Explicación de los parámetros de la función cv.glmnet:
-
-lambda -> Son los valores de lambda usados para ajustar
-cvm -> La media de los errores de validación cruzada (cross validation measure), es un vector de tamaño length(lambda)
-cvsd -> Cross validation standard error de cvm, es la estimación del error estandar de cvm
-cvup -> Curva superior que básicamente es cvm+csvd
-cvlo -> Curva inferior que es básicamente cvm-csvd
-nzero-> Cantidad de coeficientes que nos son cero con cada lambda (VALOR IMPORTANTE)
-glmnet.fit -> Un objeto ajustado para todos los datos dados
-lambda.min -> Valor del lambda que hace mínimo cvm
-lambda.1se -> Mayor valor de lambda tal que el error estandarizado esta dentro de 1
-
-
+Se puede afirmar que el modelo es de una calidad excepcional, ya que se utilizan librerias muy probadas y testeadas que utilizan algoritmos excelentes para llevar a cabo la tarea de clasificacion. En este caso se comporta tan bien ya que el conjunto a clasificar, aunque no es perfectamente linear-separable, haciendo breves transformaciones (internamente la libreria) consigue dejar el conjunto prácticamente linear-separable , de ahi que prediga tan bien. Otra cosa que ayuda a que el modelo se comporte tan bien es que el conjunto de datos usado no tenga prácticamente ruido, es decir, los digitos usados son de bastante calidad, alomejor si testeamos el modelo con digitos con ruido o poco visibles, el modelo no se comporta tan bien.
