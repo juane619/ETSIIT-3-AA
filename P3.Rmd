@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # http://mlbernauer.github.io/R/20150225_coursera_ml_multiclass_classification_logistic_regression.html
 # 
 # https://github.com/ChicagoBoothML/MachineLearning_Fall2015/blob/master/Programming%20Scripts/Lecture06/mnist_examples.R
+
+# https://becominghuman.ai/image-data-pre-processing-for-neural-networks-498289068258
 ```
 
 # 1. AJUSTE DE MODELOS LINEALES
