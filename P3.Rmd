@@ -200,3 +200,29 @@ sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[acier
 ### 10. Calidad del modelo
 
 Se puede afirmar que el modelo es de una calidad excepcional, ya que se utilizan librerias muy probadas y testeadas que utilizan algoritmos excelentes para llevar a cabo la tarea de clasificacion. En este caso se comporta tan bien ya que el conjunto a clasificar, aunque no es perfectamente linear-separable, haciendo breves transformaciones (internamente la libreria) consigue dejar el conjunto prácticamente linear-separable , de ahi que prediga tan bien. Otra cosa que ayuda a que el modelo se comporte tan bien es que el conjunto de datos usado no tenga prácticamente ruido, es decir, los digitos usados son de bastante calidad, alomejor si testeamos el modelo con digitos con ruido o poco visibles, el modelo no se comporta tan bien.
+
+
+## PROBLEMA DE REGRESIÓN: base de datos "Airfoil Self Noise"
+
+```{r}
+# https://www.neuraldesigner.com/learning/examples/airfoil_self_noise_prediction#DataSet
+
+datos = read.csv("datos/airfoil_self_noise.csv", header = FALSE)
+names(datos)[1] = "Frequency"
+names(datos)[2] = "Angle of attack"
+names(datos)[3] = "Chord length"
+names(datos)[4] = "Free stream velocity"
+names(datos)[5] = "Displacement thickness"
+names(datos)[6] = "Sound level"
+
+library(caret)
+
+train.index = createDataPartition(datos$`Sound level`, p = 0.7, list = FALSE)
+train = datos[train.index,]
+test = datos[-train.index,]
+
+features_train = data.matrix(subset(train, select = -6))
+labels_train   = data.matrix(subset(train, select = 6))
+features_test  = data.matrix(subset(test,  select = -6))
+labels_test    = data.matrix(subset(test,  select = 6))
+```
