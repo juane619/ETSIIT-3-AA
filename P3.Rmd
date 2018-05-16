@@ -205,6 +205,8 @@ Se puede afirmar que el modelo es de una calidad excepcional, ya que se utilizan
 ## PROBLEMA DE REGRESIÓN: base de datos "Airfoil Self Noise"
 
 ```{r}
+# Preparación de los datos
+
 # https://www.neuraldesigner.com/learning/examples/airfoil_self_noise_prediction#DataSet
 
 datos = read.csv("datos/airfoil_self_noise.csv", header = FALSE)
@@ -225,4 +227,9 @@ features_train = data.matrix(subset(train, select = -6))
 labels_train   = data.matrix(subset(train, select = 6))
 features_test  = data.matrix(subset(test,  select = -6))
 labels_test    = data.matrix(subset(test,  select = 6))
+
+features_train = apply(features_train,2,normalized)
+features_test = apply(features_test,2,normalized)
+
+# Datos listos para ser procesados por el modelo
 ```
