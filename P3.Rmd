@@ -22,16 +22,31 @@ knitr::opts_chunk$set(echo = TRUE)
 ### 1. Comprender el problema a resolver
 
 El problema en si trata de ajustar un modelo lineal sobre dicha base de datos para decidir si un digito es un número entre {0,1,..,9} escritos a mano, es decir, estamos ante un problema de clasificación multi clase (10 clases).
-Los conjuntos se generaron dividiendo cada digito en una matriz de 8x8 y calculando un valor de escala de grises de 0 a 16 para cada celda de la matriz promediando sus pixeles. Los datos entonces tienen 64 columnas para cada uno de los valores de escala de grises y una ultima columna (65) con el digito real.
+Los conjuntos se generaron dividiendo cada digito en una matriz de 8x8 y calculando un valor de escala de grises de 0 a 16 para cada celda de la matriz promediando sus pixeles. Los datos entonces tienen 64 columnas para cada uno de los valores de escala de grises y una ultima columna (65) con el digito real (será nuestro label).
 
-Una manera de resolver este problema podria ser crear 10 clasificadores donde cado uno clasifica entre un digito y los demás y asi con todas las clases. Otra manera podría ser utilizando Softmax, es decir, 
+Una manera de resolver este problema podria ser crear 10 clasificadores donde cado uno clasifica entre un digito y los demás y asi con todas las clases (One vs All). Otra manera podría ser utilizando Softmax, es decir, buscamos poder clasificar usando un modelo lineal un dataset multiclase. Para hacer esto tenemos a parte de la opción One vs All, la opción softmax o función exponencial normalizada, esta es una generalización de la función logística. Su función es la de "comprimir" un vector K-dimensional, z, de valores arbitrarios (clasificaciones) en un vector K-dimensional, $\sigma(z)$, de valores reales en el rango [0, 1]. La función esta dada por:
+
+$\sigma:\mathbb{R^{K}\rightarrow}\left[0,1\right]^{K}$
+$\sigma(z)_{j}=\frac{e^{zj}}{\sum_{k=1}^{K}e^{zk}}$ for $j=1, ...,K$
+
+La salida de la función softmax puede ser utilizada para representar una distribución categórica (distribución de probabilidad sobre $K$ diferentes posibles salidas). Por tanto, sabiendo esto podemos determinar que es idónea para nuestro problema de clasificación.
+
+Los pasos a seguir para afrontar este problema serían en general estos:
+
+1º Cabe señalar que lo primero que habría que hacer es asegurarnos de que todos los disgitos son igual de grandes (comparandolos mediante el número de píxeles), asumimos que esto es así pues en la web de descarga del dataset no se indica ninguna anomalía de este estilo. En cualquier caso si esto sucediese nuestra función cv.glmnet en algún momento se quejaría y mostraría el error correspondiente.
+
+2º Normalizar los datos, esto nos sirve para no tener un cuenta unas características por encima de otras en nuestros datos. Es decir, es importante pues nos garantiza que cada parámetro de entrada (píxel, en nuestro caso) tiene una distribución de datos similar. Esto hará que la convergencia sea mucho más rápida al entrenar nuestro modelo de regresión logística. Para normalizar sacaremos el máximo de cada conjunto de pixeles (mismo pixel en cada número) y el mínimo también de cada conjunto de píxeles y una vez hecho esto a cada pixel le restamos el mínimo y lo dividimos entre el maximo menos el mínimo, de esta manera obtendremos una distribución de datos entre 0 y 1, tal cual como lo queremos y además obtendremos columnas a 0 lo cual quiere decir que el mínimo y el máximo es igual y por tanto ya podemos adelantar que estas columnas son ruido para nuestro modelo.
+
+3º Tenemos los datos en un solo canal como es la escala de grises por lo que no necesitamos reducir la dimensionalidad de estos pues ya están correctos.
+
+Depues de esto procederiamos con la regularización como vamos a ver más adelante.
 
 ### 2. Preprocesamiento de los datos.
 
-Se deben normalizar los datos ya que no es igual considerar los mínimos y máximos globales (dataset completo) que considerar los de cada conjunto, es decir, pudiera ser que se "envenenaran" los conjuntos.
+Se deben normalizar los datos ya que no es igual considerar los mínimos y máximos globales (dataset completo) que considerar los de cada conjunto (mismo pixel en distintos números), es decir, pudiera ser que se "envenenaran" los conjuntos.
+Esta función nos normalizará los datos para así conseguir comprimir los datos en un rango [0, 1]. 
 
 ```{r Normalization}
-
 normalized<-function(data) {
   x<-data[!is.na(data)]
   max=max(x)
@@ -49,7 +64,7 @@ normalized<-function(data) {
 
 ### 3. Selección de clases de funciones a usar.
 
-Utilizaremos Regresión Logística ya que dicho modelo es muy usado cuando la respuesta es categórica (exactamente nuestro problema). Como nuestro modelo tiene 10 posibles salidas, nosotros usaremos el tipo de modelo Multinomial que es una generalizacion del metodo de regresion logistica para problemas multiclase.
+Utilizaremos Regresión Logística ya que dicho modelo es muy usado cuando la respuesta es categórica (exactamente nuestro problema). Como nuestro modelo tiene 10 posibles salidas, nosotros usaremos el tipo de modelo Multinomial que es una generalizacion del metodo de regresion logistica para problemas multiclase (función softmax explicada anteriormente).
 
 El modelo predice las probabilidades de los diferentes resultados posibles de una distribucion categorica como variable independiente, dado un conjunto de variables independientes.
 
@@ -95,6 +110,8 @@ En concreto, usaremos (ajustaremos) un modelo de regresión LASSO (R-LASSO). Est
 El hiperparámetro lambda: vamos a estimar el mejor lambda mediante validacion cruzada. El mejor lambda es aquél que penaliza minimizando el error de validacion cruzada, es decir, cvm.
 
 El paquete **glmnet** de R nos permite aplicar todo lo antes mencionado.
+
+El paquete **glmnet** a parte de ajustar el modelo también hace un procesamiento de los datos el cual es muy necesario para el correcto funcionamiento posterior del modelo de regresión logística. Los pasos que sigue esta libreria para preprocesar son:
 
 **glmnet** es un set de procedimientos extremadamente eficientes para ajustar todo el procedimiento de regularización lasso (también puede hacer elastic-net pero usaremos solo lasso) para regresión lineal, modelos de regresión logística multinomial (nuestro caso), regresión de Poisson y el modelo de Cox.
 Los algoritmos que contiene usan lo que se conoce como descenso cíclico coordinado, que optimiza sucesivamente la función objetivo sobre cada parámetro con otros fijos y cicla hasta que converge.
@@ -147,6 +164,7 @@ Una vez ajustado el modelo, es momento de medir nuestro modelo. Como métrica he
 
 ```{r}
 # Predicciones
+
 pred_lasso_train=predict(cvfit, newx = features_train, type= "class", s="lambda.min")
 
 confusionMatrix(data = as.factor(pred_lasso_train), reference = as.factor(labels_train))
@@ -156,7 +174,7 @@ La lectura de la matriz nos muestra como el modelo ha predicho muy bien las dist
 
 Como vemos, tenemos varias métricas obtenidas a través de la matriz de confusión que nos seran muy utiles para medir nuestro modelo:
 -   precision: numero de predicciones correctas entre el numero total de predicciones.
--   Sensibildiad y especifidad: valores que indican la capacidad de nuestro estimador para discriminar los casos positivos de los negativos. La sensibilidad se puede decir que es la tasa de verdaderos positivos. La especificidad como la tasa de verdaderos negativos.
+-   Sensibilidad y especificidad: valores que indican la capacidad de nuestro estimador para discriminar los casos positivos de los negativos. La sensibilidad se puede decir que es la tasa de verdaderos positivos. La especificidad como la tasa de verdaderos negativos.
 
 ### 9. Estimacion del error Eout.
 
