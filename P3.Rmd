@@ -204,10 +204,13 @@ Se puede afirmar que el modelo es de una calidad excepcional, ya que se utilizan
 
 ## PROBLEMA DE REGRESIÓN: base de datos "Airfoil Self Noise"
 
-```{r}
+```{r Regresion_preprocesado}
 # Preparación de los datos
 
 # https://www.neuraldesigner.com/learning/examples/airfoil_self_noise_prediction#DataSet
+# http://intellij.my/2016/03/14/regression-on-airfoil-self-noise-dataset-using-linear-regression-approach/
+
+# El objetivo es predecir el nivel de sonido en decibelios en función de los atributos dados (1-5)
 
 datos = read.csv("datos/airfoil_self_noise.csv", header = FALSE)
 names(datos)[1] = "Frequency"
@@ -219,7 +222,7 @@ names(datos)[6] = "Sound level"
 
 library(caret)
 
-train.index = createDataPartition(datos$`Sound level`, p = 0.7, list = FALSE)
+train.index = createDataPartition(datos$`Sound level`, p = 0.7, list = FALSE)   # Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)
 train = datos[train.index,]
 test = datos[-train.index,]
 
@@ -231,5 +234,20 @@ labels_test    = data.matrix(subset(test,  select = 6))
 features_train = apply(features_train,2,normalized)
 features_test = apply(features_test,2,normalized)
 
+plot(datos)
+descrCor = cor(datos) # -> Con esto vemos la correlación de las variables con las otras y ella misma (diagonal)
+
+# En probabilidad y estadística, la correlación indica la fuerza y la dirección de una relación lineal y proporcionalidad entre dos variables estadísticas. Se considera que dos variables cuantitativas están correlacionadas cuando los valores de una de ellas varían sistemáticamente con respecto a los valores homónimos de la otra: si tenemos dos variables (A y B) existe correlación entre ellas si al disminuir los valores de A lo hacen también los de B y viceversa. La correlación entre dos variables no implica, por sí misma, ninguna relación de causalidad
+
+
+# En el plot se pueden ver las características y cuales de ellas son separables o por el contrario no
+
+# http://www.datasciencedude.com/2015/05/31/test/
+
 # Datos listos para ser procesados por el modelo
+
+```
+
+```{r Regresion_modelo}
+
 ```
