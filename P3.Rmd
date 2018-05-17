@@ -129,8 +129,6 @@ registerDoParallel(cores=8)
 
 #Ajuste del modelo
 
-
-
 cvfit=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE, nfolds = 5)
 
 best_lambda=cvfit$lambda.min
@@ -167,8 +165,6 @@ Una vez ajustado el modelo, es momento de medir nuestro modelo. Como métrica he
 ```{r}
 # Predicciones
 library(caret)
-library(e1071)
-
 pred_lasso_train=predict(cvfit, newx = features_train, type= "class", s="lambda.min")
 
 confusionMatrix(data = as.factor(pred_lasso_train), reference = as.factor(labels_train))
@@ -208,14 +204,7 @@ Se puede afirmar que el modelo es de una calidad excepcional, ya que se utilizan
 
 ## PROBLEMA DE CLASIFICACIÓN: base de datos "Airfoil Self Noise"
 
-<<<<<<< HEAD
 ### 1. Problema a resolver
-=======
-```{r Regresion_preprocesado}
-library(glmnet)
-library(caret)
-# Preparación de los datos
->>>>>>> eb2aa6a4971c88959b9ca89f4aa4b22276efd67e
 
 El problema, planteado incicialmente por la NASA, trata de, dados unos ejemplos medidos realmente en un tunerl de viento, predecir el ruido (dB) producido por la interacción de un ala de avión y las turbulencias a su alrededor en torno a su perfil aerodinamico.
 
@@ -243,25 +232,21 @@ names(datos)[5] = "disp_thick"
 names(datos)[6] = "sound_level"
 
 plot(datos)
+pairs(sound_level~., data=datos)
 
 descrCor = cor(datos) # -> Con esto vemos la correlación de las variables con las otras y ella misma (diagonal)
 
 summary(descrCor)
 
 #Si establecemos un punto de corte en el que decidamos cuando dos variables son dependientes (correlacionadas) en 0.75:
-highlyCorDescr = findCorrelation(descrCor, cutoff = .75)
+highlyCorDescr <- findCorrelation(descrCor, cutoff = .75)
 sum(highlyCorDescr)
 
 xyplot(disp_thick~angle_attack,datos,grid=T,type = c("p", "smooth"),, col.line = "darkorange",lwd = 2)
 
-<<<<<<< HEAD
 #Como se ve en la grafica, las variables son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar displacement thickness.
 datos=datos[,-5]
 ```
-=======
-#Como se ve en la grafica, las variables son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar "angle attack".
-datos=datos[,-highlyCorDescr]
->>>>>>> eb2aa6a4971c88959b9ca89f4aa4b22276efd67e
 
 ### 3. Selección de clases de funciones a usar.
 
@@ -279,13 +264,7 @@ labels_train   = data.matrix(subset(train, select = 5))
 features_test  = data.matrix(subset(test,  select = -5))
 labels_test    = data.matrix(subset(test,  select = 5))
 
-<<<<<<< HEAD
 ```
-=======
-# features_train = apply(features_train,2,normalized)
-# features_test = apply(features_test,2,normalized)
-# datos[,-5]=apply(datos[,-5], 2, normalized)
->>>>>>> eb2aa6a4971c88959b9ca89f4aa4b22276efd67e
 
 
 ### 5. Regularización, modelo a usar e hyperparámetros.
@@ -299,7 +278,9 @@ summary(ans_reg)
 
 ### 8. Métrica
 
+Root Mean Square Error: es la desviación estándar de los residuos (errores de predicción). Los residuos son una medida de cuán lejos están los puntos de datos de la línea de regresión; RMSE es una medida de la dispersión de estos residuos. En otras palabras, le dice qué tan concentrado está la información en la línea de mejor ajuste. El error cuadrático medio se usa comúnmente en la climatología, la predicción y el análisis de regresión para verificar los resultados experimentales.
 
+Los valores de error que obtenemos nos dicen que, de la recta de regresión de nuestro modelo, las predicciones se desvian de la recta en una media del error obtenido (SRM).
 
 ### 9. Estimacion del error Eout.
 
@@ -361,7 +342,6 @@ reg=eval_model(ans_reg)
 
 # Preparación de los datos
 
-<<<<<<< HEAD
 # https://www.neuraldesigner.com/learning/examples/airfoil_self_noise_prediction#DataSet
 # http://intellij.my/2016/03/14/regression-on-airfoil-self-noise-dataset-using-linear-regression-approach/
 
@@ -374,15 +354,3 @@ reg=eval_model(ans_reg)
 
 
 
-=======
-reg=eval_model(ans_reg)
-
-
-```
-#http://www.statisticshowto.com/rmse/
-
-Metrica
-Root Mean Square Error: es la desviación estándar de los residuos (errores de predicción). Los residuos son una medida de cuán lejos están los puntos de datos de la línea de regresión; RMSE es una medida de la dispersión de estos residuos. En otras palabras, le dice qué tan concentrado está la información en la línea de mejor ajuste. El error cuadrático medio se usa comúnmente en la climatología, la predicción y el análisis de regresión para verificar los resultados experimentales.
-
-Los valores de error que obtenemos nos dicen que, de la recta de regresión de nuestro modelo, las predicciones se desvian de la recta en una media del error obtenido (SRM).
->>>>>>> eb2aa6a4971c88959b9ca89f4aa4b22276efd67e
