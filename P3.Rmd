@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## PROBLEMA DE CLASIFICACIÓN: base de datos "Optical Recognition of Handwritten Digits"
 
-### 1. Comprender el problema a resolver
+### 1. Problema a resolver
 
 El problema en si trata de ajustar un modelo lineal sobre dicha base de datos para decidir si un digito es un número entre {0,1,..,9} escritos a mano, es decir, estamos ante un problema de clasificación multi clase (10 clases).
 Los conjuntos se generaron dividiendo cada digito en una matriz de 8x8 y calculando un valor de escala de grises de 0 a 16 para cada celda de la matriz promediando sus pixeles. Los datos entonces tienen 64 columnas para cada uno de los valores de escala de grises y una ultima columna (65) con el digito real (será nuestro label).
@@ -202,15 +202,26 @@ sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[acier
 Se puede afirmar que el modelo es de una calidad excepcional, ya que se utilizan librerias muy probadas y testeadas que utilizan algoritmos excelentes para llevar a cabo la tarea de clasificacion. En este caso se comporta tan bien ya que el conjunto a clasificar, aunque no es perfectamente linear-separable, haciendo breves transformaciones (internamente la libreria) consigue dejar el conjunto prácticamente linear-separable , de ahi que prediga tan bien. Otra cosa que ayuda a que el modelo se comporte tan bien es que el conjunto de datos usado no tenga prácticamente ruido, es decir, los digitos usados son de bastante calidad, alomejor si testeamos el modelo con digitos con ruido o poco visibles, el modelo no se comporta tan bien.
 
 
-## PROBLEMA DE REGRESIÓN: base de datos "Airfoil Self Noise"
+## PROBLEMA DE CLASIFICACIÓN: base de datos "Airfoil Self Noise"
 
-```{r Regresion_preprocesado}
-# Preparación de los datos
+### 1. Problema a resolver
 
-# https://www.neuraldesigner.com/learning/examples/airfoil_self_noise_prediction#DataSet
-# http://intellij.my/2016/03/14/regression-on-airfoil-self-noise-dataset-using-linear-regression-approach/
+El problema, planteado incicialmente por la NASA, trata de, dados unos ejemplos medidos realmente en un tunerl de viento, predecir el ruido (dB) producido por la interacción de un ala de avión y las turbulencias a su alrededor en torno a su perfil aerodinamico.
 
-# El objetivo es predecir el nivel de sonido en decibelios en función de los atributos dados (1-5)
+Las caracterísitcas medidas son las siguientes: frecuencia (Hz), ángulo de ataque (grados), profundidad del ala o chord lenght (metros), velocidad maxima libre de turbulencias (m/s) y desplazamiento lateral debido a la succion y grosor del ala (metros).
+
+Usaremos en principio un modelo de regresión lineal normal sin usar regularización y lo compararemos con un modelo de regresion lineal usando regularizacion.
+
+### 2. Preprocesamiento de los datos.
+
+En este caso, no hace falta normalizar (explicar por qué, creo que estaria bien decirle que los datos estan medidos en sus respectivos rangos y todas las variables son cuantitativas, por lo tanto, no es necesario normalizar).
+
+En probabilidad y estadística, la correlación indica la fuerza y la dirección de una relación lineal y proporcionalidad entre dos variables estadísticas. Se considera que dos variables cuantitativas están correlacionadas cuando los valores de una de ellas varían sistemáticamente con respecto a los valores homónimos de la otra: si tenemos dos variables (A y B) existe correlación entre ellas si al disminuir los valores de A lo hacen también los de B y viceversa. La correlación entre dos variables no implica, por sí misma, ninguna relación de causalidad.
+
+Procedemos a ver la correlacion de las caracteristicas para quitar alguna de estas en caso de que algunas si lo esten, es decir, de que sean dependientes y puedan empeorar la calidad del modelo ajustado.
+
+```{r}
+# Leemos datos
 
 datos = read.csv("datos/airfoil_self_noise.csv", header = FALSE)
 names(datos)[1] = "frequency"
@@ -235,11 +246,14 @@ xyplot(disp_thick~angle_attack,datos,grid=T,type = c("p", "smooth"),, col.line =
 
 #Como se ve en la grafica, las variables son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar displacement thickness.
 datos=datos[,-5]
+```
 
-# En probabilidad y estadística, la correlación indica la fuerza y la dirección de una relación lineal y proporcionalidad entre dos variables estadísticas. Se considera que dos variables cuantitativas están correlacionadas cuando los valores de una de ellas varían sistemáticamente con respecto a los valores homónimos de la otra: si tenemos dos variables (A y B) existe correlación entre ellas si al disminuir los valores de A lo hacen también los de B y viceversa. La correlación entre dos variables no implica, por sí misma, ninguna relación de causalidad
+### 3. Selección de clases de funciones a usar.
 
+### 4. Conjuntos de training, validacion y test usados.
 
-# En el plot se pueden ver las características y cuales de ellas son separables o por el contrario no
+```{r}
+#separamos los datos en conjuntos de train y test
 
 train.index = createDataPartition(datos$`sound_level`, p = 0.7, list = FALSE)   # Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)
 train = datos[train.index,]
@@ -250,17 +264,28 @@ labels_train   = data.matrix(subset(train, select = 5))
 features_test  = data.matrix(subset(test,  select = -5))
 labels_test    = data.matrix(subset(test,  select = 5))
 
-features_train = apply(features_train,2,normalized)
-features_test = apply(features_test,2,normalized)
-datos[,-5]=apply(datos[,-5], 2, normalized)
+```
 
-# http://www.datasciencedude.com/2015/05/31/test/
 
-# ACLARACIONES NORMALIZACION
-# http://www.synergicpartners.com/precauciones-a-la-hora-de-normalizar-datos-en-data-science/
+### 5. Regularización, modelo a usar e hyperparámetros.
 
-# Datos listos para ser procesados por el modelo
+```{r}
+ans_reg <- train(sound_level ~ ., data=datos,method="lm")
 
+summary(ans_reg)
+```
+
+
+### 8. Métrica
+
+
+
+### 9. Estimacion del error Eout.
+
+### 10. Calidad del modelo
+
+```{r}
+# Funcion para evaluar nuestro modelo ya ajustado
 eval_model <- function(model) {
         pred_train <- predict(model,newdata = features_train)
         pred_test <- predict(model,newdata = features_test)
@@ -311,13 +336,19 @@ eval_model <- function(model) {
 }
 
 
-ans_reg <- train(sound_level ~ ., data=datos,method="lm")
-
-summary(ans_reg)
-
 reg=eval_model(ans_reg)
+
+# Preparación de los datos
+
+# https://www.neuraldesigner.com/learning/examples/airfoil_self_noise_prediction#DataSet
+# http://intellij.my/2016/03/14/regression-on-airfoil-self-noise-dataset-using-linear-regression-approach/
+
+# http://www.datasciencedude.com/2015/05/31/test/
+
+# http://www.synergicpartners.com/precauciones-a-la-hora-de-normalizar-datos-en-data-science/
+
 ```
 
-```{r Regresion_modelo}
 
-```
+
+
