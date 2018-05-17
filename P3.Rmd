@@ -164,7 +164,7 @@ Una vez ajustado el modelo, es momento de medir nuestro modelo. Como métrica he
 
 ```{r}
 # Predicciones
-
+library(caret)
 pred_lasso_train=predict(cvfit, newx = features_train, type= "class", s="lambda.min")
 
 confusionMatrix(data = as.factor(pred_lasso_train), reference = as.factor(labels_train))
@@ -213,39 +213,109 @@ Se puede afirmar que el modelo es de una calidad excepcional, ya que se utilizan
 # El objetivo es predecir el nivel de sonido en decibelios en función de los atributos dados (1-5)
 
 datos = read.csv("datos/airfoil_self_noise.csv", header = FALSE)
-names(datos)[1] = "Frequency"
-names(datos)[2] = "Angle of attack"
-names(datos)[3] = "Chord length"
-names(datos)[4] = "Free stream velocity"
-names(datos)[5] = "Displacement thickness"
-names(datos)[6] = "Sound level"
-
-library(caret)
-
-train.index = createDataPartition(datos$`Sound level`, p = 0.7, list = FALSE)   # Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)
-train = datos[train.index,]
-test = datos[-train.index,]
-
-features_train = data.matrix(subset(train, select = -6))
-labels_train   = data.matrix(subset(train, select = 6))
-features_test  = data.matrix(subset(test,  select = -6))
-labels_test    = data.matrix(subset(test,  select = 6))
-
-features_train = apply(features_train,2,normalized)
-features_test = apply(features_test,2,normalized)
+names(datos)[1] = "frequency"
+names(datos)[2] = "angle_attack"
+names(datos)[3] = "chord"
+names(datos)[4] = "stream_vel"
+names(datos)[5] = "disp_thick"
+names(datos)[6] = "sound_level"
 
 plot(datos)
+pairs(sound_level~., data=datos)
+
 descrCor = cor(datos) # -> Con esto vemos la correlación de las variables con las otras y ella misma (diagonal)
+
+summary(descrCor)
+
+#Si establecemos un punto de corte en el que decidamos cuando dos variables son dependientes (correlacionadas) en 0.75:
+highlyCorDescr <- findCorrelation(descrCor, cutoff = .75)
+sum(highlyCorDescr)
+
+xyplot(disp_thick~angle_attack,datos,grid=T,type = c("p", "smooth"),, col.line = "darkorange",lwd = 2)
+
+#Como se ve en la grafica, las variables son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar displacement thickness.
+datos=datos[,-5]
 
 # En probabilidad y estadística, la correlación indica la fuerza y la dirección de una relación lineal y proporcionalidad entre dos variables estadísticas. Se considera que dos variables cuantitativas están correlacionadas cuando los valores de una de ellas varían sistemáticamente con respecto a los valores homónimos de la otra: si tenemos dos variables (A y B) existe correlación entre ellas si al disminuir los valores de A lo hacen también los de B y viceversa. La correlación entre dos variables no implica, por sí misma, ninguna relación de causalidad
 
 
 # En el plot se pueden ver las características y cuales de ellas son separables o por el contrario no
 
+train.index = createDataPartition(datos$`sound_level`, p = 0.7, list = FALSE)   # Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)
+train = datos[train.index,]
+test = datos[-train.index,]
+
+features_train = data.matrix(subset(train, select = -5))
+labels_train   = data.matrix(subset(train, select = 5))
+features_test  = data.matrix(subset(test,  select = -5))
+labels_test    = data.matrix(subset(test,  select = 5))
+
+features_train = apply(features_train,2,normalized)
+features_test = apply(features_test,2,normalized)
+datos[,-5]=apply(datos[,-5], 2, normalized)
+
 # http://www.datasciencedude.com/2015/05/31/test/
+
+# ACLARACIONES NORMALIZACION
+# http://www.synergicpartners.com/precauciones-a-la-hora-de-normalizar-datos-en-data-science/
 
 # Datos listos para ser procesados por el modelo
 
+eval_model <- function(model) {
+        pred_train <- predict(model,newdata = features_train)
+        pred_test <- predict(model,newdata = features_test)
+        
+        # Scatter plots of predictions on Training and Testing sets
+        plot(pred_train,labels_train,xlim=c(100,150),ylim=c(100,150),col=1,
+             pch=19,xlab = "Predicted Noise (dB)",ylab = "Actual Noise(dB)")
+        points(pred_test,labels_test,col=2,pch=19) 
+        leg <- c("Training","Testing")
+        legend(100, 150, leg, col = c(1, 2),pch=c(19,19))
+        
+        # Scatter plots of % error on predictions on Training and Testing sets
+        par(mfrow = c(2, 1))
+        par(cex = 0.6)
+        par(mar = c(5, 5, 3, 0), oma = c(2, 2, 2, 2))
+        plot((pred_train - labels_train)* 100 /labels_train,
+             ylab = "% Error of Prediction", xlab = "Index",
+             ylim = c(-5,5),col=1,pch=19)
+        legend(0, 4.5, "Training", col = 1,pch=19)
+        plot((pred_test-labels_test)* 100 /labels_test,
+             ylab = "% Error of Prediction",  xlab = "Index",
+             ylim = c(-5,5),col=2,pch=19)
+        legend(0, 4.5, "Testing", col = 2,pch=19)
+        
+        # Actual data Vs Predictions superimposed for Training and Testing Data
+        plot(1:length(labels_train),labels_train,pch=21,col=1,
+             main = "Training: Actual Noise Vs Predicted Noise",
+             xlab = "Index",ylab = "Noise (dB)")
+        points(1:length(labels_train),pred_train,pch=21,col=2)
+        #leg <- c("Training","Predicted Training")
+        legend(0, 140, c("Actual","Predicted"), col = c(1, 2),pch=c(21,21))
+        plot(1:length(labels_test),labels_test,pch=21,col=1,
+             main = "Testing: Actual Noise Vs Predicted Noise",
+             xlab = "Index",ylab = "Noise (dB)")
+        points(1:length(labels_test),pred_test,pch=21,col="red")
+        legend(0, 140, c("Actual","Predicted"), col = c(1, 2),pch=c(21,21))
+        
+        ## Line graph of errors
+        plot(pred_train-labels_train,type='l',ylim=c(-5,+5),
+             xlab = "Index",ylab = "Actual - Predicted",main="Training")        
+        plot(pred_test-labels_test,type='l',ylim=c(-5,+5),
+             xlab = "Index",ylab = "Actual - Predicted",main="Testing")
+                
+        ISRMSE<- sqrt(mean((pred_train-labels_train)^2))
+        OSRMSE<- sqrt(mean((pred_test-labels_test)^2))
+        
+        return(c( ISRMSE,OSRMSE))
+}
+
+
+ans_reg <- train(sound_level ~ ., data=datos,method="lm")
+
+summary(ans_reg)
+
+reg=eval_model(ans_reg)
 ```
 
 ```{r Regresion_modelo}
