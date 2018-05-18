@@ -44,19 +44,20 @@ Depues de esto procederiamos con la regularización como vamos a ver más adelan
 ### 2. Preprocesamiento de los datos.
 
 Se deben normalizar los datos ya que no es igual considerar los mínimos y máximos globales (dataset completo) que considerar los de cada conjunto (mismo pixel en distintos números), es decir, pudiera ser que se "envenenaran" los conjuntos.
-Esta función nos normalizará los datos para así conseguir comprimir los datos en un rango [0, 1]. 
+Esta función nos normalizará los datos para así conseguir comprimir los datos en un rango [0, 1].
+A simple vista cuando normalicemos usando la normalización de escalado de variables o MinMax Scaler, veremos que hay columnas que se quedan a 0 lo cual indica que el máximo es igual al mínimo por lo que se puede determinar que esa columna no aporta nada y no es significativa para la clasificación, debido a esta observación decidimos emplear dos tipos de regularización (Lasso y Ridge) y compararemos los resultados y rendimiento de ambas técnicas.
 
 ```{r Normalization}
-normalized<-function(data) {
-  x<-data[!is.na(data)]
-  max=max(x)
-  min=min(x)
-  if(max==min){
-      x=0.0
+normalized = function(data) {
+  x = data[!is.na(data)]
+  max = max(x)
+  min = min(x)
+  if(max == min){
+      x = 0.0
     }
   else
-    x<-(x - min(x)) / (max(x) - min(x))
-  data[!is.na(data)]<-x
+    x = (x - min(x)) / (max(x) - min(x))
+  data[!is.na(data)] = x
   return(data)
 }
 
@@ -70,9 +71,13 @@ El modelo predice las probabilidades de los diferentes resultados posibles de un
 
 Para este tipo de modelo la variable de salida K tiene 10 clases: G={0,1,...,9}.
 
-Una vez ajustado el modelo de regresion logística, lo compararemos con otro modelo de regresión logística usando regularización:
+$\mbox{Pr}(G=k|X=x)=\frac{e^{\beta_{0k}+\beta_k^Tx}}{\sum_{\ell=1}^Ke^{\beta_{0\ell}+\beta_\ell^Tx}}$
 
+Una vez ajustado el modelo de regresion logística, lo compararemos con otro modelo de regresión logística usando regularización,utilizaremos la regla Softmax para clasificación multilabel (extension de la clasificacion binaria).
 
+Tenemos la matriz Y NxK, donde $y_{i\ell} = I(g_i=\ell)$, por tanto, la funcion de verosimilitud ya penalizada con LASSO es $\ell(\{\beta_{0k},\beta_{k}\}_1^K) = \left[\frac{1}{N} \sum_{i=1}^N \Big(\sum_{k=1}^Ky_{il} (\beta_{0k} + x_i^T \beta_k)- \log \big(\sum_{k=1}^K e^{\beta_{0k}+x_i^T \beta_k}\big)\Big)\right] +\lambda \left[ (1-\alpha)||\beta||_F^2/2 + \alpha\sum_{j=1}^p||\beta_j||_q\right]$
+
+Como vemos en dicha funcion, el parametro $\alpha$ define si la penalizacion es LASSO, RIDGE o ambas (elastic-net), nosotros en nuestro problema solo utilizaremos LASSO, es decir, con el parámetro $\alpha=1$, es decir, nos quedamos con la parte de $\alpha\sum_{j=1}^{p}||B_{j}||_{q}$ (lasso) y descartamos la parte $(1-\alpha)||\beta||_F^2/2$ (ridge).
 
 ### 4. Conjuntos de training, validacion y test usados.
 
@@ -151,20 +156,23 @@ Como vemos, el valor de lambda para Ridge es mayor, por lo que aplciará mas reg
 #Evolucion de los grados de libertad del modelo y porcentaje de desviacion segun los distintos valores de lambda.
 plot(cvfit_ls)
 
-par(c(2,2))
+old.par = par(mfrow=c(2,2))
 
 plot(cvfit_ls$glmnet.fit, "norm")
 abline(h=best_lambda_ls, col= "orange", lty=4, lwd=3)
 
 paste ("El mejor lambda es:", best_lambda_ls)
-
+old.par = par(mfrow=c(1,1))
 #ridge
 plot(cvfit_rd)
 
+old.par = par(mfrow=c(2,2))
 plot(cvfit_rd$glmnet.fit, "norm")
 abline(h=best_lambda_rd, col= "orange", lty=4, lwd=3)
 
 paste ("El mejor lambda es:", best_lambda_rd)
+
+old.par = par(mfrow=c(1,1))
 
 ```
 
@@ -308,7 +316,7 @@ descrCor = cor(datos) # -> Con esto vemos la correlación de las variables con l
 summary(descrCor)
 
 #Si establecemos un punto de corte en el que decidamos cuando dos variables son dependientes (correlacionadas) en 0.75:
-highlyCorDescr <- findCorrelation(descrCor, cutoff = .75)
+highlyCorDescr = findCorrelation(descrCor, cutoff = .75)
 sum(highlyCorDescr)
 
 xyplot(disp_thick~angle_attack,datos,grid=T,type = c("p", "smooth"),, col.line = "darkorange",lwd = 2)
@@ -350,8 +358,12 @@ cv = cv.glmnet(x = train[,-ncol(train)], y = train[,ncol(train)], alpha = 1, nfo
 
 best_lambda = cv$lambda.min
 
+old.par = par(mfrow=c(2,2))
+
 plot(cv$glmnet.fit, "norm", ylim = c(-1,0.6), col = c(1:ncol(train)))
 abline(h = best_lambda, col = "orange")
+
+old.par = par(mfrow=c(2,2))
 
 sprintf("Mejor lambda en las %s particiones es = %s", nfolds, best_lambda)
 ```
@@ -368,8 +380,6 @@ Procedemos a ajustar el modelo usando regresión normal sin regularización, con
 ans_reg = train(sound_level ~ ., data=train, method="lm")
 
 #summary(ans_reg)
-
-
 ```
 
 
@@ -385,16 +395,15 @@ Los valores de error que obtenemos nos dicen que, de la recta de regresión de n
 # Funcion para evaluar nuestro modelo ya ajustado (errores)
 
 
-eval_model <- function(model) {
-    pred_train <- predict(model,newdata = features_train)
-    pred_test <- predict(model,newdata = features_test)
-    
+eval_model = function(model) {
+    pred_train = predict(model,newdata = features_train)
+    pred_test = predict(model,newdata = features_test)
     
     # Graficas de dispersion para training y test
     plot(pred_train,labels_train,xlim=c(100,150),ylim=c(100,150),col=1,
          pch=19,xlab = "Sound level (dB)",ylab = "Actual Level Sound(dB)")
     points(pred_test,labels_test,col=2,pch=19) 
-    leg <- c("Training","Testing")
+    leg = c("Training","Testing")
     legend(100, 150, leg, col = c(1, 2),pch=c(19,19))
     
     # Scatter plots of % error on predictions on Training and Testing sets
@@ -415,7 +424,7 @@ eval_model <- function(model) {
          main = "Training: Actual Level Sound Vs Predicted Level Sound",
          xlab = "Index",ylab = "Level Sound (dB)")
     points(1:length(labels_train),pred_train,pch=21,col=2)
-    #leg <- c("Training","Predicted Training")
+    #leg = c("Training","Predicted Training")
     legend(0, 140, c("Actual","Predicted"), col = c(1, 2),pch=c(21,21))
     plot(1:length(labels_test),labels_test,pch=21,col=1,
          main = "Testing: Actual Level Sound Vs Predicted Level Sound",
@@ -429,8 +438,8 @@ eval_model <- function(model) {
     plot(pred_test-labels_test,type='l',ylim=c(-5,+5),
          xlab = "Index",ylab = "Actual - Predicted",main="Testing")
             
-    ISRME<- sqrt(mean((pred_train-labels_train)^2))
-    OSRME<- sqrt(mean((pred_test-labels_test)^2))
+    ISRME = sqrt(mean((pred_train-labels_train)^2))
+    OSRME = sqrt(mean((pred_test-labels_test)^2))
     
     return(c(ISRME,OSRME))
 }
@@ -463,11 +472,11 @@ for (i in 1:nparticiones) {
     
     cv_reg = train(sound_level ~ ., data=train_cv, method="lm")
 
-    pred_train <- predict(cv_reg,newdata = train_cv)
-    pred_test <- predict(cv_reg,newdata = test_cv)
+    pred_train = predict(cv_reg,newdata = train_cv)
+    pred_test = predict(cv_reg,newdata = test_cv)
     
-    ISRME<- sqrt(mean((pred_train-train_cv[,5])^2))
-    OSRME<- sqrt(mean((pred_test-test_cv[,5])^2))
+    ISRME = sqrt(mean((pred_train-train_cv[,5])^2))
+    OSRME = sqrt(mean((pred_test-test_cv[,5])^2))
 
     ein = ein + ISRME
     eout = eout + OSRME
