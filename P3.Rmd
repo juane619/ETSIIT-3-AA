@@ -70,7 +70,9 @@ El modelo predice las probabilidades de los diferentes resultados posibles de un
 
 Para este tipo de modelo la variable de salida K tiene 10 clases: G={0,1,...,9}.
 
-Una vez conocido nuestro problema y preprocesado los datos, nuestro modelo es el siguiente:
+Una vez ajustado el modelo de regresion logística, lo compararemos con otro modelo de regresión logística usando regularización:
+
+Una vez conocido nuestro problema y preprocesado los datos, nuestro modelo sería el siguiente:
 
 $\mbox{Pr}(G=k|X=x)=\frac{e^{\beta_{0k}+\beta_k^Tx}}{\sum_{\ell=1}^Ke^{\beta_{0\ell}+\beta_\ell^Tx}}$
 
@@ -101,6 +103,8 @@ Ahora con la función definida antes, normalizamos las características:
 ```{r}
 features_train = apply(features_train,2,normalized)
 features_test = apply(features_test,2,normalized)
+
+train[,-65]=apply(train[,-65],2,normalized)
 ```
 
 ### 5. Regularización, modelo a usar e hyperparámetros.
@@ -108,6 +112,8 @@ features_test = apply(features_test,2,normalized)
 En concreto, usaremos (ajustaremos) un modelo de regresión LASSO (R-LASSO). Este modelo de regresión lineal selecciona las variables con coeficiente mayor de un umbral prefijado. La ventaja de este modelo es que es una técnica de **regresión lineal ya regularizada**, es decir, como los datos de entrada son pixeles, es decir, pueden llegar a ser muy redundantes, dicho modelo ya penaliza variables que no dicen nada acerca de la salida, disminuyendo el correspondiente sobreajuste que esto pudiera ocasionar y además reduciendo el error fuera de la muestra.
 
 El hiperparámetro lambda: vamos a estimar el mejor lambda mediante validacion cruzada. El mejor lambda es aquél que penaliza minimizando el error de validacion cruzada, es decir, cvm.
+
+Como se ha mencionado antes, este modelo se intuye que será el principal, pero para tener otro con el que comparar e ir viendo la necesidad de regularización, primero ajustaremos el modelo de regresión logísitca sin regualrizar.
 
 El paquete **glmnet** de R nos permite aplicar todo lo antes mencionado.
 
@@ -120,26 +126,66 @@ Ahora hablemos del **conjunto de validación**: usaremos la funcin cv.glmnet() p
 
 ```{r}
 library(glmnet)
+library(caret)
+library(nnet)
+library(mlogit)
 
+#Regresión logistica normal
+rln=multinom(digit ~ ., data = train)
+summary(rln)
+
+predict_train=predict(rln, newdata = features_train, )
+aciertos_train=predict_train==labels_train
+sprintf("El error dentro de la muestra (Eout) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
+
+predict_test=predict(rln, newdata = features_test)
+aciertos_test=predict_test==labels_test
+sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
+
+```
+
+Como vemos, tenemos sobreajuste (error dentro de la muestra 0), por lo que hace falta regularización.
+
+```{r}
 #Para parelelizar (demasiado tiempo secuencialmente)
 library(doParallel)
 registerDoParallel(cores=8)
 
 # Elegimos el mejor lambda por CV de, por ejemplo, 10 particiones (por defecto). Si utilizaramos tantas particiones como numero de muestras que tenemos, estariamos hablando de leave-one-out CV, en este caso no es recomendable por el tamaño del dataset.
 
-#Ajuste del modelo
+#Ajuste del modelo (R-lasso)
 
-cvfit=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE, nfolds = 5)
+cvfit_ls=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE, nfolds = 5, alpha=1)
 
-best_lambda=cvfit$lambda.min
+best_lambda_ls=cvfit_ls$lambda.min
+
+#Ajuste del modelo (R-ridge)
+
+cvfit_rd=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE, nfolds = 5, alpha=0)
+
+best_lambda_rd=cvfit_rd$lambda.min
+
+```
+
+Como vemos, el valor de lambda para Ridge es mayor, por lo que aplciará mas regularización (tendrá mas en cuenta la penalizacion a las características).
+
+```{r}
 
 #Evolucion de los grados de libertad del modelo y porcentaje de desviacion segun los distintos valores de lambda.
-plot(cvfit)
+plot(cvfit_ls)
 
-plot(cvfit$glmnet.fit, "norm")
-abline(h=best_lambda, col= "orange", lty=4, lwd=3)
+plot(cvfit_ls$glmnet.fit, "norm")
+abline(h=best_lambda_ls, col= "orange", lty=4, lwd=3)
 
-paste ("El mejor lambda es:", best_lambda)
+paste ("El mejor lambda es:", best_lambda_ls)
+
+#ridge
+plot(cvfit_rd)
+
+plot(cvfit_rd$glmnet.fit, "norm")
+abline(h=best_lambda_rd, col= "orange", lty=4, lwd=3)
+
+paste ("El mejor lambda es:", best_lambda_rd)
 
 ```
 
@@ -181,28 +227,44 @@ Como vemos, tenemos varias métricas obtenidas a través de la matriz de confusi
 Veamos como se comporta nuestro modelo:
 
 ```{r}
-# Predicciones
-pred_lasso_train=predict(cvfit, newx = features_train, type= "class", s="lambda.min")
+# Predicciones lasso
+pred_lasso_train_ls=predict(cvfit_ls, newx = features_train, type= "class", s="lambda.min")
 
-pred_lasso_test=predict(cvfit, newx = features_test, type= "class", s="lambda.min")
+pred_lasso_test_ls=predict(cvfit_ls, newx = features_test, type= "class", s="lambda.min")
 
 #Variables mas significativas
 #cvfit$`1`>best_lambda
 
-aciertos_train=pred_lasso_train==labels_train
+aciertos_train=pred_lasso_train_ls==labels_train
 sprintf("El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
 
-aciertos_test=pred_lasso_test==labels_test
+aciertos_test=pred_lasso_test_ls==labels_test
+sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
+
+# Predicciones ridge
+pred_ridge_train=predict(cvfit_rd, newx = features_train, type= "class", s="lambda.min")
+
+pred_ridge_test=predict(cvfit_rd, newx = features_test, type= "class", s="lambda.min")
+
+#Variables mas significativas
+#cvfit$`1`>best_lambda
+
+aciertos_train=pred_ridge_train==labels_train
+sprintf("El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
+
+aciertos_test=pred_ridge_test==labels_test
 sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
 
 ```
+
+Como vemos, los errores nos muestran que nuestro modelo regularizado con ridge se comporta peor que regularizado con lasso, es porque lasso directamente elimina variables (características) y ridge tiene algo mas de ruido, es decir, nos quedamos con el **modelo de regresión logística con regularización Lasso**.
 
 ### 10. Calidad del modelo
 
 Se puede afirmar que el modelo es de una calidad excepcional, ya que se utilizan librerias muy probadas y testeadas que utilizan algoritmos excelentes para llevar a cabo la tarea de clasificacion. En este caso se comporta tan bien ya que el conjunto a clasificar, aunque no es perfectamente linear-separable, haciendo breves transformaciones (internamente la libreria) consigue dejar el conjunto prácticamente linear-separable , de ahi que prediga tan bien. Otra cosa que ayuda a que el modelo se comporte tan bien es que el conjunto de datos usado no tenga prácticamente ruido, es decir, los digitos usados son de bastante calidad, alomejor si testeamos el modelo con digitos con ruido o poco visibles, el modelo no se comporta tan bien.
 
 
-## PROBLEMA DE CLASIFICACIÓN: base de datos "Airfoil Self Noise"
+## PROBLEMA DE REGRESIÓN: base de datos "Airfoil Self Noise"
 
 ### 1. Problema a resolver
 
@@ -244,16 +306,24 @@ sum(highlyCorDescr)
 
 xyplot(disp_thick~angle_attack,datos,grid=T,type = c("p", "smooth"),, col.line = "darkorange",lwd = 2)
 
-#Como se ve en la grafica, las variables son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar displacement thickness.
+#Como se ve en la grafica, las variables "disp_thick" y "angle attack" son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar "displacement thickness".
 datos=datos[,-5]
 ```
 
 ### 3. Selección de clases de funciones a usar.
 
+Como hemos comentado anteriormente, usaremos regresión lineal normal en un princpio y regresión lineal regularizada (con lasso) para compararlos y decidir con qué modelo quedarnos.
+
 ### 4. Conjuntos de training, validacion y test usados.
+
+Separaremos los datos, manteniendo la proporcion de valores igual en cada conjunto, en una proporcion 70/30.
 
 ```{r}
 #separamos los datos en conjuntos de train y test
+
+#createFolds (de la misma familia que esta) divide el dataset en k FOLDS, valido para validacion cruzada.
+
+recomendacion: usar lo del litozz para hacer CV y asi poder comparar, debe de salir que no MEJORA nada a regresion lineal simple.
 
 train.index = createDataPartition(datos$`sound_level`, p = 0.7, list = FALSE)   # Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)
 train = datos[train.index,]
@@ -269,6 +339,10 @@ labels_test    = data.matrix(subset(test,  select = 5))
 
 ### 5. Regularización, modelo a usar e hyperparámetros.
 
+En un principio, la regularización en este caso no parece necesaria ya que tenemos pocas características. Aplicaremos regularización para comparar un modelo con otro. Como ya sabemos la función de regularización depende de un término lambda, dicho término (hiperparámetro) lo estimaremos usando validación cruzada.
+
+Procedemos a ajustar el modelo usando regresión normal sin regularización, con la variable "displacement thickness" ya eliminada.
+
 ```{r}
 ans_reg <- train(sound_level ~ ., data=datos,method="lm")
 
@@ -282,12 +356,10 @@ Root Mean Square Error: es la desviación estándar de los residuos (errores de 
 
 Los valores de error que obtenemos nos dicen que, de la recta de regresión de nuestro modelo, las predicciones se desvian de la recta en una media del error obtenido (SRM).
 
-### 9. Estimacion del error Eout.
-
-### 10. Calidad del modelo
+### 9. Estimacion del error Eout y calidad del modelo.
 
 ```{r}
-# Funcion para evaluar nuestro modelo ya ajustado
+# Funcion para evaluar nuestro modelo ya ajustado (errores)
 eval_model <- function(model) {
         pred_train <- predict(model,newdata = features_train)
         pred_test <- predict(model,newdata = features_test)
@@ -337,8 +409,11 @@ eval_model <- function(model) {
         return(c(ISRME,OSRME))
 }
 
-
 reg=eval_model(ans_reg)
+
+# Errores fuera y dentro de la muestra
+
+reg
 
 # Preparación de los datos
 
