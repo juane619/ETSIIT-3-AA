@@ -8,11 +8,11 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-# http://mlbernauer.github.io/R/20150225_coursera_ml_multiclass_classification_logistic_regression.html
-# 
-# https://github.com/ChicagoBoothML/MachineLearning_Fall2015/blob/master/Programming%20Scripts/Lecture06/mnist_examples.R
+library(glmnet)
+library(caret)
+library(nnet)
+library(mlogit)
 
-# https://becominghuman.ai/image-data-pre-processing-for-neural-networks-498289068258
 ```
 
 # 1. AJUSTE DE MODELOS LINEALES
@@ -72,15 +72,7 @@ Para este tipo de modelo la variable de salida K tiene 10 clases: G={0,1,...,9}.
 
 Una vez ajustado el modelo de regresion logística, lo compararemos con otro modelo de regresión logística usando regularización:
 
-Una vez conocido nuestro problema y preprocesado los datos, nuestro modelo sería el siguiente:
 
-$\mbox{Pr}(G=k|X=x)=\frac{e^{\beta_{0k}+\beta_k^Tx}}{\sum_{\ell=1}^Ke^{\beta_{0\ell}+\beta_\ell^Tx}}$
-
-Como vemos, utiliza la regla Softmax para clasificación multilabel (extension de la clasificacion binaria).
-
-Tenemos la matriz Y NxK, donde $y_{i\ell} = I(g_i=\ell)$, por tanto, la funcion de verosimilitud ya penalizada con LASSO es $\ell(\{\beta_{0k},\beta_{k}\}_1^K) = -\left[\frac{1}{N} \sum_{i=1}^N \Big(\sum_{k=1}^Ky_{il} (\beta_{0k} + x_i^T \beta_k)- \log \big(\sum_{k=1}^K e^{\beta_{0k}+x_i^T \beta_k}\big)\Big)\right] +\lambda \left[ (1-\alpha)||\beta||_F^2/2 + \alpha\sum_{j=1}^p||\beta_j||_q\right]$
-
-Como vemos en dicha funcion, el parametro $\alpha$ define si la penalizacion es LASSO, RIDGE o ambas (elastic-net), nosotros en nuestro problema solo utilizaremos LASSO, es decir, con el parámetro $\alpha=1$, es decir, nos quedamos con la parte de $\alpha\sum_{j=1}^p||\beta_j||_q\right]$(lasso) y descartamos la parte $(1-\alpha)||\beta||_F^2/2$ (ridge).
 
 ### 4. Conjuntos de training, validacion y test usados.
 
@@ -125,26 +117,11 @@ Los algoritmos que contiene usan lo que se conoce como descenso cíclico coordin
 Ahora hablemos del **conjunto de validación**: usaremos la funcin cv.glmnet() para ajustar el modelo usando cross-validation. Por defecto, el metodo divide el conjunto de entrenamiento antes creado en 10 trozos no superpuestos de aproximadamente el mismo tamaño, utilizando el primero de ellos como **validacion** y el resto se usa para el ajuste.
 
 ```{r}
-library(glmnet)
-library(caret)
-library(nnet)
-library(mlogit)
 
-#Regresión logistica normal
+#Ajuste del modelo. Regresión logistica normal
 rln=multinom(digit ~ ., data = train)
 #summary(rln)
-
-predict_train=predict(rln, newdata = features_train)
-aciertos_train=predict_train==labels_train
-sprintf("El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
-
-predict_test=predict(rln, newdata = features_test)
-aciertos_test=predict_test==labels_test
-sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
-
 ```
-
-Como vemos, tenemos sobreajuste (error dentro de la muestra 0), por lo que hace falta regularización.
 
 ```{r}
 #Para parelelizar (demasiado tiempo secuencialmente)
@@ -174,6 +151,8 @@ Como vemos, el valor de lambda para Ridge es mayor, por lo que aplciará mas reg
 #Evolucion de los grados de libertad del modelo y porcentaje de desviacion segun los distintos valores de lambda.
 plot(cvfit_ls)
 
+par(c(2,2))
+
 plot(cvfit_ls$glmnet.fit, "norm")
 abline(h=best_lambda_ls, col= "orange", lty=4, lwd=3)
 
@@ -195,14 +174,23 @@ Cuando la norma L1 (ejeX) es baja, todas las variables nos dicen lo mismo (estim
 Explicación de los parámetros de la función cv.glmnet:
 
 lambda -> Son los valores de lambda usados para ajustar
+
 cvm -> La media de los errores de validación cruzada (cross validation measure), es un vector de tamaño length(lambda)
+
 cvsd -> Cross validation standard error de cvm, es la estimación del error estandar de cvm
+
 cvup -> Curva superior que básicamente es cvm+csvd
+
 cvlo -> Curva inferior que es básicamente cvm-csvd
-nzero-> Cantidad de coeficientes que nos son cero con cada lambda (VALOR IMPORTANTE)
+
+nzero-> Cantidad de coeficientes que nos son cero con cada lambda
+
 glmnet.fit -> Un objeto ajustado para todos los datos dados
+
 lambda.min -> Valor del lambda que hace mínimo cvm
+
 lambda.1se -> Mayor valor de lambda tal que el error estandarizado esta dentro de 1
+
 
 ### 8. Métrica
 
@@ -210,7 +198,8 @@ Una vez ajustado el modelo, es momento de medir nuestro modelo. Como métrica he
 
 ```{r}
 # Predicciones
-library(caret)
+
+#Predicciones modelo con regularización
 pred_lasso_train=predict(cvfit_ls, newx = features_train, type= "class", s="lambda.min")
 
 confusionMatrix(data = as.factor(pred_lasso_train), reference = as.factor(labels_train))
@@ -222,14 +211,28 @@ confusionMatrix(data = as.factor(pred_lasso_train), reference = as.factor(labels
 La lectura de la matriz nos muestra como el modelo ha predicho muy bien las distintas muestras de train, clasificando erroneamente muy pocos digitos respecto al tamaño del conjunto.
 
 Como vemos, tenemos varias métricas obtenidas a través de la matriz de confusión que nos seran muy utiles para medir nuestro modelo:
+
 -   precision: numero de predicciones correctas entre el numero total de predicciones.
--   Sensibilidad y especificidad: valores que indican la capacidad de nuestro estimador para discriminar los casos positivos de los negativos. La sensibilidad se puede decir que es la tasa de verdaderos positivos. La especificidad como la tasa de verdaderos negativos.
+
+-   Sensibilidad y especificidad: valores que indican la capacidad de nuestro estimador para discriminar los casos positivos de los negativos.
+
+La sensibilidad se puede decir que es la tasa de verdaderos positivos. La especificidad como la tasa de verdaderos negativos.
 
 ### 9. Estimacion del error Eout.
 
 Veamos como se comporta nuestro modelo:
 
 ```{r}
+#Predicciones
+#Predicciones modelo sin regularización
+predict_train=predict(rln, newdata = features_train)
+aciertos_train=predict_train==labels_train
+sprintf("El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
+
+predict_test=predict(rln, newdata = features_test)
+aciertos_test=predict_test==labels_test
+sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
+
 # Predicciones lasso
 pred_lasso_train_ls=predict(cvfit_ls, newx = features_train, type= "class", s="lambda.min")
 
@@ -260,7 +263,7 @@ sprintf("RIDGE -> El error fuera de la muestra (Eout) es %s", (length(aciertos_t
 
 ```
 
-Como vemos, los errores nos muestran que nuestro modelo regularizado con ridge se comporta peor que regularizado con lasso, es porque lasso directamente elimina variables (características) y ridge tiene algo mas de ruido, es decir, nos quedamos con el **modelo de regresión logística con regularización Lasso**.
+Como vemos, con el modelo normal sin regularizar, tenemos sobreajuste (error dentro de la muestra 0 y al tener ruido por no regularizar), por lo que hace falta regularización. Los errores nos muestran que nuestro modelo regularizado con ridge se comporta peor que regularizado con lasso, es porque lasso directamente elimina variables (características) y ridge tiene algo mas de ruido, es decir, nos quedamos con el **modelo de regresión logística con regularización Lasso**.
 
 ### 10. Calidad del modelo
 
@@ -286,6 +289,8 @@ En probabilidad y estadística, la correlación indica la fuerza y la dirección
 Procedemos a ver la correlacion de las caracteristicas para quitar alguna de estas en caso de que algunas si lo esten, es decir, de que sean dependientes y puedan empeorar la calidad del modelo ajustado.
 
 ```{r}
+
+
 # Leemos datos
 
 datos = read.csv("datos/airfoil_self_noise.csv", header = FALSE)
@@ -296,7 +301,6 @@ names(datos)[4] = "stream_vel"
 names(datos)[5] = "disp_thick"
 names(datos)[6] = "sound_level"
 
-plot(datos)
 pairs(sound_level~., data=datos)
 
 descrCor = cor(datos) # -> Con esto vemos la correlación de las variables con las otras y ella misma (diagonal)
@@ -309,9 +313,12 @@ sum(highlyCorDescr)
 
 xyplot(disp_thick~angle_attack,datos,grid=T,type = c("p", "smooth"),, col.line = "darkorange",lwd = 2)
 
-#Como se ve en la grafica, las variables "disp_thick" y "angle attack" son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar "displacement thickness".
-datos=datos[,-5]
+datos=datos[,-highlyCorDescr]
 ```
+
+Se utilzia pairs(), forma mas visual de verlo y cor(), forma estadística para ver la correlación entre variables.
+
+Como se ve en la grafica, las variables "disp_thick" y "angle attack" son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar "angle of attack".
 
 ### 3. Selección de clases de funciones a usar.
 
@@ -324,42 +331,45 @@ Separaremos los datos, manteniendo la proporcion de valores igual en cada conjun
 ```{r}
 #separamos los datos en conjuntos de train y test
 
-#createFolds (de la misma familia que esta) divide el dataset en k FOLDS, valido para validacion cruzada.
-
 # Dividimos los datos en train y test ya que no tenemos un dataset de train:
 set.seed(1000)
 train.index = createDataPartition(datos$`sound_level`, p = 0.7, list = FALSE)   # Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)
 train = as.matrix(datos[train.index,])
 test = as.matrix(datos[-train.index,])
 
+features_train=train[,-ncol(train)]
+features_test=test[,-ncol(test)]
+labels_train=train[,ncol(train)]
+labels_test=test[,ncol(test)]
+
 # Cross validation:
 
 nfolds = 10  # Para elegir el mejor lambda
 
 cv = cv.glmnet(x = train[,-ncol(train)], y = train[,ncol(train)], alpha = 1, nfolds = nfolds)
-train[, ncol(train)]
-best_lambda = cv$lambda.min
-plot(cv$glmnet.fit, "norm", ylim = c(-1,0.6), col = c(1:length(features_train)))
-abline(h = best_lambda, col = "orange")
-sprintf("Mejor lambda en las %s particiones es = %s", kfolds, best_lambda)
-```
 
+best_lambda = cv$lambda.min
+
+plot(cv$glmnet.fit, "norm", ylim = c(-1,0.6), col = c(1:ncol(train)))
+abline(h = best_lambda, col = "orange")
+
+sprintf("Mejor lambda en las %s particiones es = %s", nfolds, best_lambda)
+```
+La gráfica nos muestra que quita radicalmente dos de variables mas, cosa que puede perjudicar a nuestro modelo seriamente.
 
 ### 5. Regularización, modelo a usar e hyperparámetros.
 
-En un principio, la regularización en este caso no parece necesaria ya que tenemos pocas características. Aplicaremos regularización para comparar un modelo con otro. Como ya sabemos la función de regularización depende de un término lambda, dicho término (hiperparámetro) lo estimaremos usando validación cruzada.
+En un principio, la regularización en este caso no parece necesaria ya que tenemos pocas características. Aplicaremos regularización para comparar un modelo con el otro. Como ya sabemos la función de regularización depende de un término lambda, dicho término (hiperparámetro) lo estimaremos usando validación cruzada.
 
-Procedemos a ajustar el modelo usando regresión normal sin regularización, con la variable "displacement thickness" ya eliminada.
+Procedemos a ajustar el modelo usando regresión normal sin regularización, con la variable "angle of attack" ya eliminada.
 
 ```{r}
+#Ajuste del modelo de regresion lineal sin regularizar
 ans_reg = train(sound_level ~ ., data=train, method="lm")
 
-summary(ans_reg)
+#summary(ans_reg)
 
-# (CV) Una vez tenemos el mejor lambda, procedemos a ajustar nuestro modelo:
-nparticiones = 5
 
-folds = createFolds(train, nparticiones)
 ```
 
 
@@ -373,9 +383,12 @@ Los valores de error que obtenemos nos dicen que, de la recta de regresión de n
 
 ```{r}
 # Funcion para evaluar nuestro modelo ya ajustado (errores)
+
+
 eval_model <- function(model) {
     pred_train <- predict(model,newdata = features_train)
     pred_test <- predict(model,newdata = features_test)
+    
     
     # Graficas de dispersion para training y test
     plot(pred_train,labels_train,xlim=c(100,150),ylim=c(100,150),col=1,
@@ -422,38 +435,50 @@ eval_model <- function(model) {
     return(c(ISRME,OSRME))
 }
 
-# Errores fuera y dentro de la muestra
+# Calidad del modelo en una única division.
+
+#Errores fuera y dentro de la muestra
 
 sprintf("Error dentro del train = %s", eval_model(ans_reg)[1])
 sprintf("Error dentro del test = %s", eval_model(ans_reg)[2])
+
+# Calidad del modelo usando Cross-Validation 
+nparticiones = 5
+
+folds = cut(seq(1, nrow(train)), breaks=nparticiones, labels=F)
+
+#barajamos
+folds=sample(folds)
 
 # Comprobación errores cross validation
 
 ein = eout = 0
 
 for (i in 1:nparticiones) {
-    cv_reg = folds[i](sound_level ~ ., data=train, method="lm")
-    ein = ein + eval_model(ans_reg)[1]
-    eout = eout + eval_model(ans_reg)[2]
+    testIndexes=which(folds==i, arr.ind = T)
+    trainIndexes=which(folds!=i, arr.ind = T)
     
-    sprintf("Error dentro del train, particion %s es %s", i, eval_model(ans_reg)[1])
-    sprintf("Error dentro del test, particion %s es %s", i, eval_model(ans_reg)[2])
+    train_cv=train[trainIndexes,]
+    test_cv=train[testIndexes,]
+    
+    cv_reg = train(sound_level ~ ., data=train_cv, method="lm")
+
+    pred_train <- predict(cv_reg,newdata = train_cv)
+    pred_test <- predict(cv_reg,newdata = test_cv)
+    
+    ISRME<- sqrt(mean((pred_train-train_cv[,5])^2))
+    OSRME<- sqrt(mean((pred_test-test_cv[,5])^2))
+
+    ein = ein + ISRME
+    eout = eout + OSRME
+
+    sprintf("Error dentro del train, particion %s es %s", i, ISRME)
+    sprintf("Error dentro del test, particion %s es %s", i, OSRME)
 }
 
 sprintf("Ein medio con %s particiones = %s", nparticiones, ein/nparticiones)
 sprintf("Eout medio con %s particiones = %s", nparticiones, eout/nparticiones)
 
-# Preparación de los datos
-
-# https://www.neuraldesigner.com/learning/examples/airfoil_self_noise_prediction#DataSet
-# http://intellij.my/2016/03/14/regression-on-airfoil-self-noise-dataset-using-linear-regression-approach/
-
-# http://www.datasciencedude.com/2015/05/31/test/
-
-# http://www.synergicpartners.com/precauciones-a-la-hora-de-normalizar-datos-en-data-science/
 
 ```
-
-
-
-
+Como podemos ver, el error tomando un conjunto de train y test del dataset proporcionado es mucho menor que el error medido con Cross-Validation, ya que este obtiene el error medio tomando conjuntos de test-train cinco veces en este caso, por lo que podemos ver que nuestro modelo se comporta medianamente bien ya que el ruido predicho **se puede desviar en unos 14-15 dB de media**, del ruido real que pudiera generarse.
