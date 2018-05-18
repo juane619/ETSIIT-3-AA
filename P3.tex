@@ -1,0 +1,1121 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={P3},
+            pdfauthor={JuanE y Adri},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{P3}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+  \author{JuanE y Adri}
+  \preauthor{\centering\large\emph}
+  \postauthor{\par}
+  \predate{\centering\large\emph}
+  \postdate{\par}
+  \date{5 May 2018}
+
+
+\begin{document}
+\maketitle
+
+\section{1. AJUSTE DE MODELOS
+LINEALES}\label{ajuste-de-modelos-lineales}
+
+\subsection{\texorpdfstring{PROBLEMA DE CLASIFICACIÓN: base de datos
+``Optical Recognition of Handwritten
+Digits''}{PROBLEMA DE CLASIFICACIÓN: base de datos Optical Recognition of Handwritten Digits}}\label{problema-de-clasificacion-base-de-datos-optical-recognition-of-handwritten-digits}
+
+\subsubsection{1. Problema a resolver}\label{problema-a-resolver}
+
+El problema en si trata de ajustar un modelo lineal sobre dicha base de
+datos para decidir si un digito es un número entre \{0,1,..,9\} escritos
+a mano, es decir, estamos ante un problema de clasificación multi clase
+(10 clases). Los conjuntos se generaron dividiendo cada digito en una
+matriz de 8x8 y calculando un valor de escala de grises de 0 a 16 para
+cada celda de la matriz promediando sus pixeles. Los datos entonces
+tienen 64 columnas para cada uno de los valores de escala de grises y
+una ultima columna (65) con el digito real (será nuestro label).
+
+Una manera de resolver este problema podria ser crear 10 clasificadores
+donde cado uno clasifica entre un digito y los demás y asi con todas las
+clases (One vs All). Otra manera podría ser utilizando Softmax, es
+decir, buscamos poder clasificar usando un modelo lineal un dataset
+multiclase. Para hacer esto tenemos a parte de la opción One vs All, la
+opción softmax o función exponencial normalizada, esta es una
+generalización de la función logística. Su función es la de
+``comprimir'' un vector K-dimensional, z, de valores arbitrarios
+(clasificaciones) en un vector K-dimensional, \(\sigma(z)\), de valores
+reales en el rango {[}0, 1{]}. La función esta dada por:
+
+\(\sigma:\mathbb{R^{K}\rightarrow}\left[0,1\right]^{K}\)
+\(\sigma(z)_{j}=\frac{e^{zj}}{\sum_{k=1}^{K}e^{zk}}\) for \(j=1, ...,K\)
+
+La salida de la función softmax puede ser utilizada para representar una
+distribución categórica (distribución de probabilidad sobre \(K\)
+diferentes posibles salidas). Por tanto, sabiendo esto podemos
+determinar que es idónea para nuestro problema de clasificación.
+
+Los pasos a seguir para afrontar este problema serían en general estos:
+
+1º Cabe señalar que lo primero que habría que hacer es asegurarnos de
+que todos los disgitos son igual de grandes (comparandolos mediante el
+número de píxeles), asumimos que esto es así pues en la web de descarga
+del dataset no se indica ninguna anomalía de este estilo. En cualquier
+caso si esto sucediese nuestra función cv.glmnet en algún momento se
+quejaría y mostraría el error correspondiente.
+
+2º Normalizar los datos, esto nos sirve para no tener un cuenta unas
+características por encima de otras en nuestros datos. Es decir, es
+importante pues nos garantiza que cada parámetro de entrada (píxel, en
+nuestro caso) tiene una distribución de datos similar. Esto hará que la
+convergencia sea mucho más rápida al entrenar nuestro modelo de
+regresión logística. Para normalizar sacaremos el máximo de cada
+conjunto de pixeles (mismo pixel en cada número) y el mínimo también de
+cada conjunto de píxeles y una vez hecho esto a cada pixel le restamos
+el mínimo y lo dividimos entre el maximo menos el mínimo, de esta manera
+obtendremos una distribución de datos entre 0 y 1, tal cual como lo
+queremos y además obtendremos columnas a 0 lo cual quiere decir que el
+mínimo y el máximo es igual y por tanto ya podemos adelantar que estas
+columnas son ruido para nuestro modelo.
+
+3º Tenemos los datos en un solo canal como es la escala de grises por lo
+que no necesitamos reducir la dimensionalidad de estos pues ya están
+correctos.
+
+Depues de esto procederiamos con la regularización como vamos a ver más
+adelante.
+
+\subsubsection{2. Preprocesamiento de los
+datos.}\label{preprocesamiento-de-los-datos.}
+
+Se deben normalizar los datos ya que no es igual considerar los mínimos
+y máximos globales (dataset completo) que considerar los de cada
+conjunto (mismo pixel en distintos números), es decir, pudiera ser que
+se ``envenenaran'' los conjuntos. Esta función nos normalizará los datos
+para así conseguir comprimir los datos en un rango {[}0, 1{]}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{normalized<-}\ControlFlowTok{function}\NormalTok{(data) \{}
+\NormalTok{  x<-data[}\OperatorTok{!}\KeywordTok{is.na}\NormalTok{(data)]}
+\NormalTok{  max=}\KeywordTok{max}\NormalTok{(x)}
+\NormalTok{  min=}\KeywordTok{min}\NormalTok{(x)}
+  \ControlFlowTok{if}\NormalTok{(max}\OperatorTok{==}\NormalTok{min)\{}
+\NormalTok{      x=}\FloatTok{0.0}
+\NormalTok{    \}}
+  \ControlFlowTok{else}
+\NormalTok{    x<-(x }\OperatorTok{-}\StringTok{ }\KeywordTok{min}\NormalTok{(x)) }\OperatorTok{/}\StringTok{ }\NormalTok{(}\KeywordTok{max}\NormalTok{(x) }\OperatorTok{-}\StringTok{ }\KeywordTok{min}\NormalTok{(x))}
+\NormalTok{  data[}\OperatorTok{!}\KeywordTok{is.na}\NormalTok{(data)]<-x}
+  \KeywordTok{return}\NormalTok{(data)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{3. Selección de clases de funciones a
+usar.}\label{seleccion-de-clases-de-funciones-a-usar.}
+
+Utilizaremos Regresión Logística ya que dicho modelo es muy usado cuando
+la respuesta es categórica (exactamente nuestro problema). Como nuestro
+modelo tiene 10 posibles salidas, nosotros usaremos el tipo de modelo
+Multinomial que es una generalizacion del metodo de regresion logistica
+para problemas multiclase (función softmax explicada anteriormente).
+
+El modelo predice las probabilidades de los diferentes resultados
+posibles de una distribucion categorica como variable independiente,
+dado un conjunto de variables independientes.
+
+Para este tipo de modelo la variable de salida K tiene 10 clases:
+G=\{0,1,\ldots{},9\}.
+
+Una vez ajustado el modelo de regresion logística, lo compararemos con
+otro modelo de regresión logística usando regularización:
+
+Una vez conocido nuestro problema y preprocesado los datos, nuestro
+modelo sería el siguiente:
+
+\(\mbox{Pr}(G=k|X=x)=\frac{e^{\beta_{0k}+\beta_k^Tx}}{\sum_{\ell=1}^Ke^{\beta_{0\ell}+\beta_\ell^Tx}}\)
+
+Como vemos, utiliza la regla Softmax para clasificación multilabel
+(extension de la clasificacion binaria).
+
+Tenemos la matriz Y NxK, donde \(y_{i\ell} = I(g_i=\ell)\), por tanto,
+la funcion de verosimilitud ya penalizada con LASSO es
+\(\ell(\{\beta_{0k},\beta_{k}\}_1^K) = -\left[\frac{1}{N} \sum_{i=1}^N \Big(\sum_{k=1}^Ky_{il} (\beta_{0k} + x_i^T \beta_k)- \log \big(\sum_{k=1}^K e^{\beta_{0k}+x_i^T \beta_k}\big)\Big)\right] +\lambda \left[ (1-\alpha)||\beta||_F^2/2 + \alpha\sum_{j=1}^p||\beta_j||_q\right]\)
+
+Como vemos en dicha funcion, el parametro \(\alpha\) define si la
+penalizacion es LASSO, RIDGE o ambas (elastic-net), nosotros en nuestro
+problema solo utilizaremos LASSO, es decir, con el parámetro
+\(\alpha=1\), es decir, nos quedamos con la parte de
+\(\alpha\sum_{j=1}^p||\beta_j||_q\right]\)(lasso) y descartamos la parte
+\((1-\alpha)||\beta||_F^2/2\) (ridge).
+
+\subsubsection{4. Conjuntos de training, validacion y test
+usados.}\label{conjuntos-de-training-validacion-y-test-usados.}
+
+Como los datos ya nos vienen correctamente divididos en train y test,
+procedemos a su lectura y a la descomposición para tener correctamente
+identificadas y separadas las características y las etiquetas de cada
+conjunto de datos (train y test). El conjunto de validación lo
+explicamos en la siguiente sección.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{train =}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"datos/optdigits_tra.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{names}\NormalTok{(train)[}\DecValTok{65}\NormalTok{] =}\StringTok{ "digit"}
+\NormalTok{test =}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"datos/optdigits_tes.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{names}\NormalTok{(test)[}\DecValTok{65}\NormalTok{] =}\StringTok{ "digit"}
+
+\NormalTok{features_train =}\StringTok{ }\KeywordTok{data.matrix}\NormalTok{(}\KeywordTok{subset}\NormalTok{(train, }\DataTypeTok{select =} \OperatorTok{-}\NormalTok{digit))}
+\NormalTok{labels_train   =}\StringTok{ }\KeywordTok{data.matrix}\NormalTok{(}\KeywordTok{subset}\NormalTok{(train, }\DataTypeTok{select =}\NormalTok{ digit))}
+\NormalTok{features_test  =}\StringTok{ }\KeywordTok{data.matrix}\NormalTok{(}\KeywordTok{subset}\NormalTok{(test,  }\DataTypeTok{select =} \OperatorTok{-}\NormalTok{digit))}
+\NormalTok{labels_test    =}\StringTok{ }\KeywordTok{data.matrix}\NormalTok{(}\KeywordTok{subset}\NormalTok{(test,  }\DataTypeTok{select =}\NormalTok{ digit))}
+\end{Highlighting}
+\end{Shaded}
+
+Ahora con la función definida antes, normalizamos las características:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{features_train =}\StringTok{ }\KeywordTok{apply}\NormalTok{(features_train,}\DecValTok{2}\NormalTok{,normalized)}
+\NormalTok{features_test =}\StringTok{ }\KeywordTok{apply}\NormalTok{(features_test,}\DecValTok{2}\NormalTok{,normalized)}
+
+\NormalTok{train[,}\OperatorTok{-}\DecValTok{65}\NormalTok{]=}\KeywordTok{apply}\NormalTok{(train[,}\OperatorTok{-}\DecValTok{65}\NormalTok{],}\DecValTok{2}\NormalTok{,normalized)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{5. Regularización, modelo a usar e
+hyperparámetros.}\label{regularizacion-modelo-a-usar-e-hyperparametros.}
+
+En concreto, usaremos (ajustaremos) un modelo de regresión LASSO
+(R-LASSO). Este modelo de regresión lineal selecciona las variables con
+coeficiente mayor de un umbral prefijado. La ventaja de este modelo es
+que es una técnica de \textbf{regresión lineal ya regularizada}, es
+decir, como los datos de entrada son pixeles, es decir, pueden llegar a
+ser muy redundantes, dicho modelo ya penaliza variables que no dicen
+nada acerca de la salida, disminuyendo el correspondiente sobreajuste
+que esto pudiera ocasionar y además reduciendo el error fuera de la
+muestra.
+
+El hiperparámetro lambda: vamos a estimar el mejor lambda mediante
+validacion cruzada. El mejor lambda es aquél que penaliza minimizando el
+error de validacion cruzada, es decir, cvm.
+
+Como se ha mencionado antes, este modelo se intuye que será el
+principal, pero para tener otro con el que comparar e ir viendo la
+necesidad de regularización, primero ajustaremos el modelo de regresión
+logísitca sin regualrizar.
+
+El paquete \textbf{glmnet} de R nos permite aplicar todo lo antes
+mencionado.
+
+El paquete \textbf{glmnet} a parte de ajustar el modelo también hace un
+procesamiento de los datos el cual es muy necesario para el correcto
+funcionamiento posterior del modelo de regresión logística. Los pasos
+que sigue esta libreria para preprocesar son:
+
+\textbf{glmnet} es un set de procedimientos extremadamente eficientes
+para ajustar todo el procedimiento de regularización lasso (también
+puede hacer elastic-net pero usaremos solo lasso) para regresión lineal,
+modelos de regresión logística multinomial (nuestro caso), regresión de
+Poisson y el modelo de Cox. Los algoritmos que contiene usan lo que se
+conoce como descenso cíclico coordinado, que optimiza sucesivamente la
+función objetivo sobre cada parámetro con otros fijos y cicla hasta que
+converge.
+
+Ahora hablemos del \textbf{conjunto de validación}: usaremos la funcin
+cv.glmnet() para ajustar el modelo usando cross-validation. Por defecto,
+el metodo divide el conjunto de entrenamiento antes creado en 10 trozos
+no superpuestos de aproximadamente el mismo tamaño, utilizando el
+primero de ellos como \textbf{validacion} y el resto se usa para el
+ajuste.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(glmnet)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: Matrix
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: foreach
+\end{verbatim}
+
+\begin{verbatim}
+## Loaded glmnet 2.0-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(caret)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: lattice
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: ggplot2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(nnet)}
+\KeywordTok{library}\NormalTok{(mlogit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: Formula
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: maxLik
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: miscTools
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Please cite the 'maxLik' package as:
+## Henningsen, Arne and Toomet, Ott (2011). maxLik: A package for maximum likelihood estimation in R. Computational Statistics 26(3), 443-458. DOI 10.1007/s00180-010-0217-1.
+## 
+## If you have questions, suggestions, or comments regarding the 'maxLik' package, please use a forum or 'tracker' at maxLik's R-Forge site:
+## https://r-forge.r-project.org/projects/maxlik/
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Regresión logistica normal}
+\NormalTok{rln=}\KeywordTok{multinom}\NormalTok{(digit }\OperatorTok{~}\StringTok{ }\NormalTok{., }\DataTypeTok{data =}\NormalTok{ train)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # weights:  660 (585 variable)
+## initial  value 8802.782811 
+## iter  10 value 1446.527616
+## iter  20 value 587.767761
+## iter  30 value 337.450780
+## iter  40 value 207.169230
+## iter  50 value 100.984459
+## iter  60 value 21.914484
+## iter  70 value 0.483734
+## iter  80 value 0.002841
+## final  value 0.000083 
+## converged
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#summary(rln)}
+
+\NormalTok{predict_train=}\KeywordTok{predict}\NormalTok{(rln, }\DataTypeTok{newdata =}\NormalTok{ features_train)}
+\NormalTok{aciertos_train=predict_train}\OperatorTok{==}\NormalTok{labels_train}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"El error dentro de la muestra (Eout) es %s"}\NormalTok{, (}\KeywordTok{length}\NormalTok{(aciertos_train[aciertos_train}\OperatorTok{==}\NormalTok{F]) }\OperatorTok{/}\StringTok{ }\KeywordTok{length}\NormalTok{(aciertos_train)) }\OperatorTok{*}\StringTok{ }\DecValTok{100}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "El error dentro de la muestra (Eout) es 0"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{predict_test=}\KeywordTok{predict}\NormalTok{(rln, }\DataTypeTok{newdata =}\NormalTok{ features_test)}
+\NormalTok{aciertos_test=predict_test}\OperatorTok{==}\NormalTok{labels_test}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"El error fuera de la muestra (Eout) es %s"}\NormalTok{, (}\KeywordTok{length}\NormalTok{(aciertos_test[aciertos_test}\OperatorTok{==}\NormalTok{F]) }\OperatorTok{/}\StringTok{ }\KeywordTok{length}\NormalTok{(aciertos_test)) }\OperatorTok{*}\StringTok{ }\DecValTok{100}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "El error fuera de la muestra (Eout) es 9.34891485809683"
+\end{verbatim}
+
+Como vemos, tenemos sobreajuste (error dentro de la muestra 0), por lo
+que hace falta regularización.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Para parelelizar (demasiado tiempo secuencialmente)}
+\KeywordTok{library}\NormalTok{(doParallel)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: iterators
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: parallel
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{registerDoParallel}\NormalTok{(}\DataTypeTok{cores=}\DecValTok{8}\NormalTok{)}
+
+\CommentTok{# Elegimos el mejor lambda por CV de, por ejemplo, 10 particiones (por defecto). Si utilizaramos tantas particiones como numero de muestras que tenemos, estariamos hablando de leave-one-out CV, en este caso no es recomendable por el tamaño del dataset.}
+
+\CommentTok{#Ajuste del modelo (R-lasso)}
+
+\NormalTok{cvfit_ls=}\KeywordTok{cv.glmnet}\NormalTok{(features_train, labels_train, }\DataTypeTok{family=}\StringTok{"multinomial"}\NormalTok{, }\DataTypeTok{type.multinomial =} \StringTok{"grouped"}\NormalTok{, }\DataTypeTok{parallel =} \OtherTok{TRUE}\NormalTok{, }\DataTypeTok{nfolds =} \DecValTok{5}\NormalTok{, }\DataTypeTok{alpha=}\DecValTok{1}\NormalTok{)}
+
+\NormalTok{best_lambda_ls=cvfit_ls}\OperatorTok{$}\NormalTok{lambda.min}
+
+\CommentTok{#Ajuste del modelo (R-ridge)}
+
+\NormalTok{cvfit_rd=}\KeywordTok{cv.glmnet}\NormalTok{(features_train, labels_train, }\DataTypeTok{family=}\StringTok{"multinomial"}\NormalTok{, }\DataTypeTok{type.multinomial =} \StringTok{"grouped"}\NormalTok{, }\DataTypeTok{parallel =} \OtherTok{TRUE}\NormalTok{, }\DataTypeTok{nfolds =} \DecValTok{5}\NormalTok{, }\DataTypeTok{alpha=}\DecValTok{0}\NormalTok{)}
+
+\NormalTok{best_lambda_rd=cvfit_rd}\OperatorTok{$}\NormalTok{lambda.min}
+\end{Highlighting}
+\end{Shaded}
+
+Como vemos, el valor de lambda para Ridge es mayor, por lo que aplciará
+mas regularización (tendrá mas en cuenta la penalizacion a las
+características).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Evolucion de los grados de libertad del modelo y porcentaje de desviacion segun los distintos valores de lambda.}
+\KeywordTok{plot}\NormalTok{(cvfit_ls)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(cvfit_ls}\OperatorTok{$}\NormalTok{glmnet.fit, }\StringTok{"norm"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-2.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-3.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-4.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-5.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-6.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-7.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-8.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-9.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-10.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{abline}\NormalTok{(}\DataTypeTok{h=}\NormalTok{best_lambda_ls, }\DataTypeTok{col=} \StringTok{"orange"}\NormalTok{, }\DataTypeTok{lty=}\DecValTok{4}\NormalTok{, }\DataTypeTok{lwd=}\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-11.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{paste}\NormalTok{ (}\StringTok{"El mejor lambda es:"}\NormalTok{, best_lambda_ls)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "El mejor lambda es: 0.00151786199604323"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#ridge}
+\KeywordTok{plot}\NormalTok{(cvfit_rd)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-12.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(cvfit_rd}\OperatorTok{$}\NormalTok{glmnet.fit, }\StringTok{"norm"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-13.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-14.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-15.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-16.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-17.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-18.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-19.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-20.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-21.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{abline}\NormalTok{(}\DataTypeTok{h=}\NormalTok{best_lambda_rd, }\DataTypeTok{col=} \StringTok{"orange"}\NormalTok{, }\DataTypeTok{lty=}\DecValTok{4}\NormalTok{, }\DataTypeTok{lwd=}\DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-5-22.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{paste}\NormalTok{ (}\StringTok{"El mejor lambda es:"}\NormalTok{, best_lambda_rd)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "El mejor lambda es: 0.0552244371003232"
+\end{verbatim}
+
+Los anteriores gráficos (uno para cada clase) muestran los valores que
+toma lambda por cada variable predictora. A nosotros solo nos interesan
+aquellas que esten por encima de un umbral definido por nosotros. La
+linea naranja es dicho umbral, el mejor lambda. Las lineas que superan
+dicho umbral son aquellas variables que son mas significativas para
+ajustar el modelo. Cuando la norma L1 (ejeX) es baja, todas las
+variables nos dicen lo mismo (estimador nulo o aleatorio, es decir, el
+modelo no sabe nada realmente).
+
+Explicación de los parámetros de la función cv.glmnet:
+
+lambda -\textgreater{} Son los valores de lambda usados para ajustar cvm
+-\textgreater{} La media de los errores de validación cruzada (cross
+validation measure), es un vector de tamaño length(lambda) cvsd
+-\textgreater{} Cross validation standard error de cvm, es la estimación
+del error estandar de cvm cvup -\textgreater{} Curva superior que
+básicamente es cvm+csvd cvlo -\textgreater{} Curva inferior que es
+básicamente cvm-csvd nzero-\textgreater{} Cantidad de coeficientes que
+nos son cero con cada lambda (VALOR IMPORTANTE) glmnet.fit
+-\textgreater{} Un objeto ajustado para todos los datos dados lambda.min
+-\textgreater{} Valor del lambda que hace mínimo cvm lambda.1se
+-\textgreater{} Mayor valor de lambda tal que el error estandarizado
+esta dentro de 1
+
+\subsubsection{8. Métrica}\label{metrica}
+
+Una vez ajustado el modelo, es momento de medir nuestro modelo. Como
+métrica hemos decidido usar \textbf{matriz de confusión} ya que nos
+permite mostrar de forma explicita cuando una clase es confundida con
+otra (falsos positivos/negativos), es decir, permite trabajar de forma
+separada con distintos tipos de error.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Predicciones}
+\KeywordTok{library}\NormalTok{(caret)}
+\NormalTok{pred_lasso_train=}\KeywordTok{predict}\NormalTok{(cvfit_ls, }\DataTypeTok{newx =}\NormalTok{ features_train, }\DataTypeTok{type=} \StringTok{"class"}\NormalTok{, }\DataTypeTok{s=}\StringTok{"lambda.min"}\NormalTok{)}
+
+\KeywordTok{confusionMatrix}\NormalTok{(}\DataTypeTok{data =} \KeywordTok{as.factor}\NormalTok{(pred_lasso_train), }\DataTypeTok{reference =} \KeywordTok{as.factor}\NormalTok{(labels_train))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   0   1   2   3   4   5   6   7   8   9
+##          0 373   0   0   0   0   0   0   0   0   1
+##          1   0 379   0   0   0   0   2   0   6   5
+##          2   0   1 376   0   0   0   0   0   0   0
+##          3   0   0   1 381   0   0   0   1   0   2
+##          4   1   1   0   0 385   0   1   0   3   2
+##          5   1   0   0   4   0 372   0   0   1   1
+##          6   1   1   1   0   2   0 374   0   0   0
+##          7   0   1   0   1   0   0   0 386   0   1
+##          8   0   4   0   0   0   0   0   0 370   2
+##          9   0   2   2   3   0   4   0   0   0 368
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9846          
+##                  95% CI : (0.9801, 0.9882)
+##     No Information Rate : 0.1018          
+##     P-Value [Acc > NIR] : < 2.2e-16       
+##                                           
+##                   Kappa : 0.9829          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: 0 Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+## Sensitivity           0.99202  0.97429  0.98947  0.97943   0.9948  0.98936
+## Specificity           0.99971  0.99621  0.99971  0.99884   0.9977  0.99797
+## Pos Pred Value        0.99733  0.96684  0.99735  0.98961   0.9796  0.98153
+## Neg Pred Value        0.99913  0.99709  0.99884  0.99767   0.9994  0.99884
+## Prevalence            0.09835  0.10175  0.09940  0.10175   0.1012  0.09835
+## Detection Rate        0.09757  0.09914  0.09835  0.09966   0.1007  0.09731
+## Detection Prevalence  0.09783  0.10254  0.09861  0.10071   0.1028  0.09914
+## Balanced Accuracy     0.99587  0.98525  0.99459  0.98913   0.9963  0.99367
+##                      Class: 6 Class: 7 Class: 8 Class: 9
+## Sensitivity           0.99204   0.9974  0.97368  0.96335
+## Specificity           0.99855   0.9991  0.99826  0.99680
+## Pos Pred Value        0.98681   0.9923  0.98404  0.97098
+## Neg Pred Value        0.99913   0.9997  0.99710  0.99593
+## Prevalence            0.09861   0.1012  0.09940  0.09992
+## Detection Rate        0.09783   0.1010  0.09678  0.09626
+## Detection Prevalence  0.09914   0.1018  0.09835  0.09914
+## Balanced Accuracy     0.99530   0.9983  0.98597  0.98008
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pred_lasso_train=}\KeywordTok{predict}\NormalTok{(cvfit_rd, }\DataTypeTok{newx =}\NormalTok{ features_train, }\DataTypeTok{type=} \StringTok{"class"}\NormalTok{, }\DataTypeTok{s=}\StringTok{"lambda.min"}\NormalTok{)}
+
+\KeywordTok{confusionMatrix}\NormalTok{(}\DataTypeTok{data =} \KeywordTok{as.factor}\NormalTok{(pred_lasso_train), }\DataTypeTok{reference =} \KeywordTok{as.factor}\NormalTok{(labels_train))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   0   1   2   3   4   5   6   7   8   9
+##          0 374   0   0   0   0   1   0   0   0   1
+##          1   0 360   1   0   1   1   4   1  15   8
+##          2   0   5 369   1   0   1   0   1   0   0
+##          3   0   0   0 374   0   1   0   2   1   5
+##          4   1   0   0   0 370   0   2   0   3   6
+##          5   0   0   1   4   0 355   0   0   1   1
+##          6   1   2   0   0   3   0 370   0   3   0
+##          7   0   2   1   1   1   0   0 383   0   8
+##          8   0   8   7   2   4   0   1   0 356   4
+##          9   0  12   1   7   8  17   0   0   1 349
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9574          
+##                  95% CI : (0.9505, 0.9635)
+##     No Information Rate : 0.1018          
+##     P-Value [Acc > NIR] : < 2.2e-16       
+##                                           
+##                   Kappa : 0.9526          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: 0 Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+## Sensitivity           0.99468  0.92545  0.97105  0.96144  0.95607  0.94415
+## Specificity           0.99942  0.99097  0.99768  0.99738  0.99651  0.99797
+## Pos Pred Value        0.99468  0.92072  0.97878  0.97650  0.96859  0.98066
+## Neg Pred Value        0.99942  0.99155  0.99681  0.99564  0.99506  0.99393
+## Prevalence            0.09835  0.10175  0.09940  0.10175  0.10123  0.09835
+## Detection Rate        0.09783  0.09417  0.09652  0.09783  0.09678  0.09286
+## Detection Prevalence  0.09835  0.10228  0.09861  0.10018  0.09992  0.09469
+## Balanced Accuracy     0.99705  0.95821  0.98436  0.97941  0.97629  0.97106
+##                      Class: 6 Class: 7 Class: 8 Class: 9
+## Sensitivity           0.98143   0.9897  0.93684  0.91361
+## Specificity           0.99739   0.9962  0.99245  0.98663
+## Pos Pred Value        0.97625   0.9672  0.93194  0.88354
+## Neg Pred Value        0.99797   0.9988  0.99303  0.99037
+## Prevalence            0.09861   0.1012  0.09940  0.09992
+## Detection Rate        0.09678   0.1002  0.09312  0.09129
+## Detection Prevalence  0.09914   0.1036  0.09992  0.10332
+## Balanced Accuracy     0.98941   0.9929  0.96465  0.95012
+\end{verbatim}
+
+La lectura de la matriz nos muestra como el modelo ha predicho muy bien
+las distintas muestras de train, clasificando erroneamente muy pocos
+digitos respecto al tamaño del conjunto.
+
+Como vemos, tenemos varias métricas obtenidas a través de la matriz de
+confusión que nos seran muy utiles para medir nuestro modelo: -
+precision: numero de predicciones correctas entre el numero total de
+predicciones. - Sensibilidad y especificidad: valores que indican la
+capacidad de nuestro estimador para discriminar los casos positivos de
+los negativos. La sensibilidad se puede decir que es la tasa de
+verdaderos positivos. La especificidad como la tasa de verdaderos
+negativos.
+
+\subsubsection{9. Estimacion del error
+Eout.}\label{estimacion-del-error-eout.}
+
+Veamos como se comporta nuestro modelo:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Predicciones lasso}
+\NormalTok{pred_lasso_train_ls=}\KeywordTok{predict}\NormalTok{(cvfit_ls, }\DataTypeTok{newx =}\NormalTok{ features_train, }\DataTypeTok{type=} \StringTok{"class"}\NormalTok{, }\DataTypeTok{s=}\StringTok{"lambda.min"}\NormalTok{)}
+
+\NormalTok{pred_lasso_test_ls=}\KeywordTok{predict}\NormalTok{(cvfit_ls, }\DataTypeTok{newx =}\NormalTok{ features_test, }\DataTypeTok{type=} \StringTok{"class"}\NormalTok{, }\DataTypeTok{s=}\StringTok{"lambda.min"}\NormalTok{)}
+
+\CommentTok{#Variables mas significativas}
+\CommentTok{#cvfit$`1`>best_lambda}
+
+\NormalTok{aciertos_train=pred_lasso_train_ls}\OperatorTok{==}\NormalTok{labels_train}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"LASSO -> El error dentro de la muestra (Ein) es %s"}\NormalTok{, (}\KeywordTok{length}\NormalTok{(aciertos_train[aciertos_train}\OperatorTok{==}\NormalTok{F]) }\OperatorTok{/}\StringTok{ }\KeywordTok{length}\NormalTok{(aciertos_train)) }\OperatorTok{*}\StringTok{ }\DecValTok{100}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "LASSO -> El error dentro de la muestra (Ein) es 1.543290609469"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{aciertos_test=pred_lasso_test_ls}\OperatorTok{==}\NormalTok{labels_test}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"LASSO -> El error fuera de la muestra (Eout) es %s"}\NormalTok{, (}\KeywordTok{length}\NormalTok{(aciertos_test[aciertos_test}\OperatorTok{==}\NormalTok{F]) }\OperatorTok{/}\StringTok{ }\KeywordTok{length}\NormalTok{(aciertos_test)) }\OperatorTok{*}\StringTok{ }\DecValTok{100}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "LASSO -> El error fuera de la muestra (Eout) es 4.73010573177518"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Predicciones ridge}
+\NormalTok{pred_ridge_train=}\KeywordTok{predict}\NormalTok{(cvfit_rd, }\DataTypeTok{newx =}\NormalTok{ features_train, }\DataTypeTok{type=} \StringTok{"class"}\NormalTok{, }\DataTypeTok{s=}\StringTok{"lambda.min"}\NormalTok{)}
+
+\NormalTok{pred_ridge_test=}\KeywordTok{predict}\NormalTok{(cvfit_rd, }\DataTypeTok{newx =}\NormalTok{ features_test, }\DataTypeTok{type=} \StringTok{"class"}\NormalTok{, }\DataTypeTok{s=}\StringTok{"lambda.min"}\NormalTok{)}
+
+\CommentTok{#Variables mas significativas}
+\CommentTok{#cvfit$`1`>best_lambda}
+
+\NormalTok{aciertos_train=pred_ridge_train}\OperatorTok{==}\NormalTok{labels_train}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"RIDGE -> El error dentro de la muestra (Ein) es %s"}\NormalTok{, (}\KeywordTok{length}\NormalTok{(aciertos_train[aciertos_train}\OperatorTok{==}\NormalTok{F]) }\OperatorTok{/}\StringTok{ }\KeywordTok{length}\NormalTok{(aciertos_train)) }\OperatorTok{*}\StringTok{ }\DecValTok{100}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "RIDGE -> El error dentro de la muestra (Ein) es 4.26366727700759"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{aciertos_test=pred_ridge_test}\OperatorTok{==}\NormalTok{labels_test}
+\KeywordTok{sprintf}\NormalTok{(}\StringTok{"RIDGE -> El error fuera de la muestra (Eout) es %s"}\NormalTok{, (}\KeywordTok{length}\NormalTok{(aciertos_test[aciertos_test}\OperatorTok{==}\NormalTok{F]) }\OperatorTok{/}\StringTok{ }\KeywordTok{length}\NormalTok{(aciertos_test)) }\OperatorTok{*}\StringTok{ }\DecValTok{100}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "RIDGE -> El error fuera de la muestra (Eout) es 6.62214802448525"
+\end{verbatim}
+
+Como vemos, los errores nos muestran que nuestro modelo regularizado con
+ridge se comporta peor que regularizado con lasso, es porque lasso
+directamente elimina variables (características) y ridge tiene algo mas
+de ruido, es decir, nos quedamos con el \textbf{modelo de regresión
+logística con regularización Lasso}.
+
+\subsubsection{10. Calidad del modelo}\label{calidad-del-modelo}
+
+Se puede afirmar que el modelo es de una calidad excepcional, ya que se
+utilizan librerias muy probadas y testeadas que utilizan algoritmos
+excelentes para llevar a cabo la tarea de clasificacion. En este caso se
+comporta tan bien ya que el conjunto a clasificar, aunque no es
+perfectamente linear-separable, haciendo breves transformaciones
+(internamente la libreria) consigue dejar el conjunto prácticamente
+linear-separable , de ahi que prediga tan bien. Otra cosa que ayuda a
+que el modelo se comporte tan bien es que el conjunto de datos usado no
+tenga prácticamente ruido, es decir, los digitos usados son de bastante
+calidad, alomejor si testeamos el modelo con digitos con ruido o poco
+visibles, el modelo no se comporta tan bien.
+
+\subsection{\texorpdfstring{PROBLEMA DE REGRESIÓN: base de datos
+``Airfoil Self
+Noise''}{PROBLEMA DE REGRESIÓN: base de datos Airfoil Self Noise}}\label{problema-de-regresion-base-de-datos-airfoil-self-noise}
+
+\subsubsection{1. Problema a resolver}\label{problema-a-resolver-1}
+
+El problema, planteado incicialmente por la NASA, trata de, dados unos
+ejemplos medidos realmente en un tunerl de viento, predecir el ruido
+(dB) producido por la interacción de un ala de avión y las turbulencias
+a su alrededor en torno a su perfil aerodinamico.
+
+Las caracterísitcas medidas son las siguientes: frecuencia (Hz), ángulo
+de ataque (grados), profundidad del ala o chord lenght (metros),
+velocidad maxima libre de turbulencias (m/s) y desplazamiento lateral
+debido a la succion y grosor del ala (metros).
+
+Usaremos en principio un modelo de regresión lineal normal sin usar
+regularización y lo compararemos con un modelo de regresion lineal
+usando regularizacion.
+
+\subsubsection{2. Preprocesamiento de los
+datos.}\label{preprocesamiento-de-los-datos.-1}
+
+En este caso, no hace falta normalizar (explicar por qué, creo que
+estaria bien decirle que los datos estan medidos en sus respectivos
+rangos y todas las variables son cuantitativas, por lo tanto, no es
+necesario normalizar).
+
+En probabilidad y estadística, la correlación indica la fuerza y la
+dirección de una relación lineal y proporcionalidad entre dos variables
+estadísticas. Se considera que dos variables cuantitativas están
+correlacionadas cuando los valores de una de ellas varían
+sistemáticamente con respecto a los valores homónimos de la otra: si
+tenemos dos variables (A y B) existe correlación entre ellas si al
+disminuir los valores de A lo hacen también los de B y viceversa. La
+correlación entre dos variables no implica, por sí misma, ninguna
+relación de causalidad.
+
+Procedemos a ver la correlacion de las caracteristicas para quitar
+alguna de estas en caso de que algunas si lo esten, es decir, de que
+sean dependientes y puedan empeorar la calidad del modelo ajustado.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Leemos datos}
+
+\NormalTok{datos =}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"datos/airfoil_self_noise.csv"}\NormalTok{, }\DataTypeTok{header =} \OtherTok{FALSE}\NormalTok{)}
+\KeywordTok{names}\NormalTok{(datos)[}\DecValTok{1}\NormalTok{] =}\StringTok{ "frequency"}
+\KeywordTok{names}\NormalTok{(datos)[}\DecValTok{2}\NormalTok{] =}\StringTok{ "angle_attack"}
+\KeywordTok{names}\NormalTok{(datos)[}\DecValTok{3}\NormalTok{] =}\StringTok{ "chord"}
+\KeywordTok{names}\NormalTok{(datos)[}\DecValTok{4}\NormalTok{] =}\StringTok{ "stream_vel"}
+\KeywordTok{names}\NormalTok{(datos)[}\DecValTok{5}\NormalTok{] =}\StringTok{ "disp_thick"}
+\KeywordTok{names}\NormalTok{(datos)[}\DecValTok{6}\NormalTok{] =}\StringTok{ "sound_level"}
+
+\KeywordTok{plot}\NormalTok{(datos)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pairs}\NormalTok{(sound_level}\OperatorTok{~}\NormalTok{., }\DataTypeTok{data=}\NormalTok{datos)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-8-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{descrCor =}\StringTok{ }\KeywordTok{cor}\NormalTok{(datos) }\CommentTok{# -> Con esto vemos la correlación de las variables con las otras y ella misma (diagonal)}
+
+\KeywordTok{summary}\NormalTok{(descrCor)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    frequency         angle_attack          chord          
+##  Min.   :-0.39071   Min.   :-0.50487   Min.   :-0.504868  
+##  1st Qu.:-0.26210   1st Qu.:-0.24360   1st Qu.:-0.232332  
+##  Median :-0.11688   Median :-0.04867   Median :-0.112252  
+##  Mean   : 0.03940   Mean   : 0.14640   Mean   : 0.006376  
+##  3rd Qu.: 0.09933   3rd Qu.: 0.57974   3rd Qu.: 0.001925  
+##  Max.   : 1.00000   Max.   : 1.00000   Max.   : 1.000000  
+##    stream_vel          disp_thick       sound_level       
+##  Min.   :-0.003974   Min.   :-0.3127   Min.   :-0.390711  
+##  1st Qu.: 0.017530   1st Qu.:-0.2278   1st Qu.:-0.293542  
+##  Median : 0.091931   Median :-0.1124   Median :-0.196134  
+##  Mean   : 0.219556   Mean   : 0.1643   Mean   : 0.004909  
+##  3rd Qu.: 0.131524   3rd Qu.: 0.5641   3rd Qu.: 0.054800  
+##  Max.   : 1.000000   Max.   : 1.0000   Max.   : 1.000000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Si establecemos un punto de corte en el que decidamos cuando dos variables son dependientes (correlacionadas) en 0.75:}
+\NormalTok{highlyCorDescr <-}\StringTok{ }\KeywordTok{findCorrelation}\NormalTok{(descrCor, }\DataTypeTok{cutoff =}\NormalTok{ .}\DecValTok{75}\NormalTok{)}
+\KeywordTok{sum}\NormalTok{(highlyCorDescr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{xyplot}\NormalTok{(disp_thick}\OperatorTok{~}\NormalTok{angle_attack,datos,}\DataTypeTok{grid=}\NormalTok{T,}\DataTypeTok{type =} \KeywordTok{c}\NormalTok{(}\StringTok{"p"}\NormalTok{, }\StringTok{"smooth"}\NormalTok{),, }\DataTypeTok{col.line =} \StringTok{"darkorange"}\NormalTok{,}\DataTypeTok{lwd =} \DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-8-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Como se ve en la grafica, las variables "disp_thick" y "angle attack" son dependientes unas de otra, por tanto, hay que quitar una de ellas. Decidimos eliminar "displacement thickness".}
+\NormalTok{datos=datos[,}\OperatorTok{-}\DecValTok{5}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{3. Selección de clases de funciones a
+usar.}\label{seleccion-de-clases-de-funciones-a-usar.-1}
+
+Como hemos comentado anteriormente, usaremos regresión lineal normal en
+un princpio y regresión lineal regularizada (con lasso) para compararlos
+y decidir con qué modelo quedarnos.
+
+\subsubsection{4. Conjuntos de training, validacion y test
+usados.}\label{conjuntos-de-training-validacion-y-test-usados.-1}
+
+Separaremos los datos, manteniendo la proporcion de valores igual en
+cada conjunto, en una proporcion 70/30.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#separamos los datos en conjuntos de train y test}
+
+\CommentTok{#createFolds (de la misma familia que esta) divide el dataset en k FOLDS, valido para validacion cruzada.}
+
+\CommentTok{#recomendacion: usar lo del litozz para hacer CV y asi poder comparar, debe de salir que no MEJORA nada a regresion lineal simple.}
+
+\NormalTok{train.index =}\StringTok{ }\KeywordTok{createDataPartition}\NormalTok{(datos}\OperatorTok{$}\StringTok{`}\DataTypeTok{sound_level}\StringTok{`}\NormalTok{, }\DataTypeTok{p =} \FloatTok{0.7}\NormalTok{, }\DataTypeTok{list =} \OtherTok{FALSE}\NormalTok{)   }\CommentTok{# Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)}
+\NormalTok{train =}\StringTok{ }\NormalTok{datos[train.index,]}
+\NormalTok{test =}\StringTok{ }\NormalTok{datos[}\OperatorTok{-}\NormalTok{train.index,]}
+
+\NormalTok{features_train =}\StringTok{ }\KeywordTok{data.matrix}\NormalTok{(}\KeywordTok{subset}\NormalTok{(train, }\DataTypeTok{select =} \OperatorTok{-}\DecValTok{5}\NormalTok{))}
+\NormalTok{labels_train   =}\StringTok{ }\KeywordTok{data.matrix}\NormalTok{(}\KeywordTok{subset}\NormalTok{(train, }\DataTypeTok{select =} \DecValTok{5}\NormalTok{))}
+\NormalTok{features_test  =}\StringTok{ }\KeywordTok{data.matrix}\NormalTok{(}\KeywordTok{subset}\NormalTok{(test,  }\DataTypeTok{select =} \OperatorTok{-}\DecValTok{5}\NormalTok{))}
+\NormalTok{labels_test    =}\StringTok{ }\KeywordTok{data.matrix}\NormalTok{(}\KeywordTok{subset}\NormalTok{(test,  }\DataTypeTok{select =} \DecValTok{5}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{5. Regularización, modelo a usar e
+hyperparámetros.}\label{regularizacion-modelo-a-usar-e-hyperparametros.-1}
+
+En un principio, la regularización en este caso no parece necesaria ya
+que tenemos pocas características. Aplicaremos regularización para
+comparar un modelo con otro. Como ya sabemos la función de
+regularización depende de un término lambda, dicho término
+(hiperparámetro) lo estimaremos usando validación cruzada.
+
+Procedemos a ajustar el modelo usando regresión normal sin
+regularización, con la variable ``displacement thickness'' ya eliminada.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ans_reg <-}\StringTok{ }\KeywordTok{train}\NormalTok{(sound_level }\OperatorTok{~}\StringTok{ }\NormalTok{., }\DataTypeTok{data=}\NormalTok{datos,}\DataTypeTok{method=}\StringTok{"lm"}\NormalTok{)}
+
+\KeywordTok{summary}\NormalTok{(ans_reg)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = .outcome ~ ., data = dat)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -16.2227  -2.9353  -0.2472   3.4118  18.2814 
+## 
+## Coefficients:
+##                Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)   1.334e+02  5.585e-01  238.89   <2e-16 ***
+## frequency    -1.292e-03  4.341e-05  -29.77   <2e-16 ***
+## angle_attack -7.074e-01  2.661e-02  -26.58   <2e-16 ***
+## chord        -4.024e+01  1.612e+00  -24.96   <2e-16 ***
+## stream_vel    1.071e-01  8.352e-03   12.82   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 4.959 on 1498 degrees of freedom
+## Multiple R-squared:  0.4846, Adjusted R-squared:  0.4832 
+## F-statistic: 352.1 on 4 and 1498 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\subsubsection{8. Métrica}\label{metrica-1}
+
+Root Mean Square Error: es la desviación estándar de los residuos
+(errores de predicción). Los residuos son una medida de cuán lejos están
+los puntos de datos de la línea de regresión; RMSE es una medida de la
+dispersión de estos residuos. En otras palabras, le dice qué tan
+concentrado está la información en la línea de mejor ajuste. El error
+cuadrático medio se usa comúnmente en la climatología, la predicción y
+el análisis de regresión para verificar los resultados experimentales.
+
+Los valores de error que obtenemos nos dicen que, de la recta de
+regresión de nuestro modelo, las predicciones se desvian de la recta en
+una media del error obtenido (SRM).
+
+\subsubsection{9. Estimacion del error Eout y calidad del
+modelo.}\label{estimacion-del-error-eout-y-calidad-del-modelo.}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Funcion para evaluar nuestro modelo ya ajustado (errores)}
+\NormalTok{eval_model <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(model) \{}
+\NormalTok{        pred_train <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(model,}\DataTypeTok{newdata =}\NormalTok{ features_train)}
+\NormalTok{        pred_test <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(model,}\DataTypeTok{newdata =}\NormalTok{ features_test)}
+        
+        \CommentTok{# Graficas de dispersion para training y test}
+        \KeywordTok{plot}\NormalTok{(pred_train,labels_train,}\DataTypeTok{xlim=}\KeywordTok{c}\NormalTok{(}\DecValTok{100}\NormalTok{,}\DecValTok{150}\NormalTok{),}\DataTypeTok{ylim=}\KeywordTok{c}\NormalTok{(}\DecValTok{100}\NormalTok{,}\DecValTok{150}\NormalTok{),}\DataTypeTok{col=}\DecValTok{1}\NormalTok{,}
+             \DataTypeTok{pch=}\DecValTok{19}\NormalTok{,}\DataTypeTok{xlab =} \StringTok{"Sound level (dB)"}\NormalTok{,}\DataTypeTok{ylab =} \StringTok{"Actual Level Sound(dB)"}\NormalTok{)}
+        \KeywordTok{points}\NormalTok{(pred_test,labels_test,}\DataTypeTok{col=}\DecValTok{2}\NormalTok{,}\DataTypeTok{pch=}\DecValTok{19}\NormalTok{) }
+\NormalTok{        leg <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"Training"}\NormalTok{,}\StringTok{"Testing"}\NormalTok{)}
+        \KeywordTok{legend}\NormalTok{(}\DecValTok{100}\NormalTok{, }\DecValTok{150}\NormalTok{, leg, }\DataTypeTok{col =} \KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{),}\DataTypeTok{pch=}\KeywordTok{c}\NormalTok{(}\DecValTok{19}\NormalTok{,}\DecValTok{19}\NormalTok{))}
+        
+        \CommentTok{# Scatter plots of % error on predictions on Training and Testing sets}
+        \KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow =} \KeywordTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{, }\DecValTok{1}\NormalTok{))}
+        \KeywordTok{par}\NormalTok{(}\DataTypeTok{cex =} \FloatTok{0.6}\NormalTok{)}
+        \KeywordTok{par}\NormalTok{(}\DataTypeTok{mar =} \KeywordTok{c}\NormalTok{(}\DecValTok{5}\NormalTok{, }\DecValTok{5}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{0}\NormalTok{), }\DataTypeTok{oma =} \KeywordTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{2}\NormalTok{))}
+        \KeywordTok{plot}\NormalTok{((pred_train }\OperatorTok{-}\StringTok{ }\NormalTok{labels_train)}\OperatorTok{*}\StringTok{ }\DecValTok{100} \OperatorTok{/}\NormalTok{labels_train,}
+             \DataTypeTok{ylab =} \StringTok{"% Error of Prediction"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Index"}\NormalTok{,}
+             \DataTypeTok{ylim =} \KeywordTok{c}\NormalTok{(}\OperatorTok{-}\DecValTok{5}\NormalTok{,}\DecValTok{5}\NormalTok{),}\DataTypeTok{col=}\DecValTok{1}\NormalTok{,}\DataTypeTok{pch=}\DecValTok{19}\NormalTok{)}
+        \KeywordTok{legend}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FloatTok{4.5}\NormalTok{, }\StringTok{"Training"}\NormalTok{, }\DataTypeTok{col =} \DecValTok{1}\NormalTok{,}\DataTypeTok{pch=}\DecValTok{19}\NormalTok{)}
+        \KeywordTok{plot}\NormalTok{((pred_test}\OperatorTok{-}\NormalTok{labels_test)}\OperatorTok{*}\StringTok{ }\DecValTok{100} \OperatorTok{/}\NormalTok{labels_test,}
+             \DataTypeTok{ylab =} \StringTok{"% Error of Prediction"}\NormalTok{,  }\DataTypeTok{xlab =} \StringTok{"Index"}\NormalTok{,}
+             \DataTypeTok{ylim =} \KeywordTok{c}\NormalTok{(}\OperatorTok{-}\DecValTok{5}\NormalTok{,}\DecValTok{5}\NormalTok{),}\DataTypeTok{col=}\DecValTok{2}\NormalTok{,}\DataTypeTok{pch=}\DecValTok{19}\NormalTok{)}
+        \KeywordTok{legend}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FloatTok{4.5}\NormalTok{, }\StringTok{"Testing"}\NormalTok{, }\DataTypeTok{col =} \DecValTok{2}\NormalTok{,}\DataTypeTok{pch=}\DecValTok{19}\NormalTok{)}
+        
+        \CommentTok{# Actual data Vs Predictions superimposed for Training and Testing Data}
+        \KeywordTok{plot}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(labels_train),labels_train,}\DataTypeTok{pch=}\DecValTok{21}\NormalTok{,}\DataTypeTok{col=}\DecValTok{1}\NormalTok{,}
+             \DataTypeTok{main =} \StringTok{"Training: Actual Level Sound Vs Predicted Level Sound"}\NormalTok{,}
+             \DataTypeTok{xlab =} \StringTok{"Index"}\NormalTok{,}\DataTypeTok{ylab =} \StringTok{"Level Sound (dB)"}\NormalTok{)}
+        \KeywordTok{points}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(labels_train),pred_train,}\DataTypeTok{pch=}\DecValTok{21}\NormalTok{,}\DataTypeTok{col=}\DecValTok{2}\NormalTok{)}
+        \CommentTok{#leg <- c("Training","Predicted Training")}
+        \KeywordTok{legend}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{140}\NormalTok{, }\KeywordTok{c}\NormalTok{(}\StringTok{"Actual"}\NormalTok{,}\StringTok{"Predicted"}\NormalTok{), }\DataTypeTok{col =} \KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{),}\DataTypeTok{pch=}\KeywordTok{c}\NormalTok{(}\DecValTok{21}\NormalTok{,}\DecValTok{21}\NormalTok{))}
+        \KeywordTok{plot}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(labels_test),labels_test,}\DataTypeTok{pch=}\DecValTok{21}\NormalTok{,}\DataTypeTok{col=}\DecValTok{1}\NormalTok{,}
+             \DataTypeTok{main =} \StringTok{"Testing: Actual Level Sound Vs Predicted Level Sound"}\NormalTok{,}
+             \DataTypeTok{xlab =} \StringTok{"Index"}\NormalTok{,}\DataTypeTok{ylab =} \StringTok{"Level Sound (dB)"}\NormalTok{)}
+        \KeywordTok{points}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(labels_test),pred_test,}\DataTypeTok{pch=}\DecValTok{21}\NormalTok{,}\DataTypeTok{col=}\StringTok{"red"}\NormalTok{)}
+        \KeywordTok{legend}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{140}\NormalTok{, }\KeywordTok{c}\NormalTok{(}\StringTok{"Actual"}\NormalTok{,}\StringTok{"Predicted"}\NormalTok{), }\DataTypeTok{col =} \KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{),}\DataTypeTok{pch=}\KeywordTok{c}\NormalTok{(}\DecValTok{21}\NormalTok{,}\DecValTok{21}\NormalTok{))}
+        
+\NormalTok{        ## Line graph of errors}
+        \KeywordTok{plot}\NormalTok{(pred_train}\OperatorTok{-}\NormalTok{labels_train,}\DataTypeTok{type=}\StringTok{'l'}\NormalTok{,}\DataTypeTok{ylim=}\KeywordTok{c}\NormalTok{(}\OperatorTok{-}\DecValTok{5}\NormalTok{,}\OperatorTok{+}\DecValTok{5}\NormalTok{),}
+             \DataTypeTok{xlab =} \StringTok{"Index"}\NormalTok{,}\DataTypeTok{ylab =} \StringTok{"Actual - Predicted"}\NormalTok{,}\DataTypeTok{main=}\StringTok{"Training"}\NormalTok{)        }
+        \KeywordTok{plot}\NormalTok{(pred_test}\OperatorTok{-}\NormalTok{labels_test,}\DataTypeTok{type=}\StringTok{'l'}\NormalTok{,}\DataTypeTok{ylim=}\KeywordTok{c}\NormalTok{(}\OperatorTok{-}\DecValTok{5}\NormalTok{,}\OperatorTok{+}\DecValTok{5}\NormalTok{),}
+             \DataTypeTok{xlab =} \StringTok{"Index"}\NormalTok{,}\DataTypeTok{ylab =} \StringTok{"Actual - Predicted"}\NormalTok{,}\DataTypeTok{main=}\StringTok{"Testing"}\NormalTok{)}
+                
+\NormalTok{        ISRME<-}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{mean}\NormalTok{((pred_train}\OperatorTok{-}\NormalTok{labels_train)}\OperatorTok{^}\DecValTok{2}\NormalTok{))}
+\NormalTok{        OSRME<-}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{mean}\NormalTok{((pred_test}\OperatorTok{-}\NormalTok{labels_test)}\OperatorTok{^}\DecValTok{2}\NormalTok{))}
+        
+        \KeywordTok{return}\NormalTok{(}\KeywordTok{c}\NormalTok{(ISRME,OSRME))}
+\NormalTok{\}}
+
+\NormalTok{reg=}\KeywordTok{eval_model}\NormalTok{(ans_reg)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{P3_files/figure-latex/unnamed-chunk-11-1.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-11-2.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-11-3.pdf}
+\includegraphics{P3_files/figure-latex/unnamed-chunk-11-4.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Errores fuera y dentro de la muestra}
+
+\NormalTok{reg}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 4.953823 4.944740
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Preparación de los datos}
+
+\CommentTok{# https://www.neuraldesigner.com/learning/examples/airfoil_self_noise_prediction#DataSet}
+\CommentTok{# http://intellij.my/2016/03/14/regression-on-airfoil-self-noise-dataset-using-linear-regression-approach/}
+
+\CommentTok{# http://www.datasciencedude.com/2015/05/31/test/}
+
+\CommentTok{# http://www.synergicpartners.com/precauciones-a-la-hora-de-normalizar-datos-en-data-science/}
+\end{Highlighting}
+\end{Shaded}
+
+
+\end{document}

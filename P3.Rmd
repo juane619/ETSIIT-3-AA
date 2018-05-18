@@ -88,9 +88,9 @@ Como los datos ya nos vienen correctamente divididos en train y test, procedemos
 
 ```{r}
 train = read.csv("datos/optdigits_tra.csv", header = FALSE)
-names(train)[65] = "digit"
+names(train)[ncol(train)] = "digit"
 test = read.csv("datos/optdigits_tes.csv", header = FALSE)
-names(test)[65] = "digit"
+names(test)[ncol(train)] = "digit"
 
 features_train = data.matrix(subset(train, select = -digit))
 labels_train   = data.matrix(subset(train, select = digit))
@@ -104,7 +104,7 @@ Ahora con la función definida antes, normalizamos las características:
 features_train = apply(features_train,2,normalized)
 features_test = apply(features_test,2,normalized)
 
-train[,-65]=apply(train[,-65],2,normalized)
+train[,-ncol(train)]=apply(train[,-ncol(train)],2,normalized)
 ```
 
 ### 5. Regularización, modelo a usar e hyperparámetros.
@@ -132,11 +132,11 @@ library(mlogit)
 
 #Regresión logistica normal
 rln=multinom(digit ~ ., data = train)
-summary(rln)
+#summary(rln)
 
-predict_train=predict(rln, newdata = features_train, )
+predict_train=predict(rln, newdata = features_train)
 aciertos_train=predict_train==labels_train
-sprintf("El error dentro de la muestra (Eout) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
+sprintf("El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
 
 predict_test=predict(rln, newdata = features_test)
 aciertos_test=predict_test==labels_test
@@ -211,10 +211,13 @@ Una vez ajustado el modelo, es momento de medir nuestro modelo. Como métrica he
 ```{r}
 # Predicciones
 library(caret)
-pred_lasso_train=predict(cvfit, newx = features_train, type= "class", s="lambda.min")
+pred_lasso_train=predict(cvfit_ls, newx = features_train, type= "class", s="lambda.min")
 
 confusionMatrix(data = as.factor(pred_lasso_train), reference = as.factor(labels_train))
 
+pred_lasso_train=predict(cvfit_rd, newx = features_train, type= "class", s="lambda.min")
+
+confusionMatrix(data = as.factor(pred_lasso_train), reference = as.factor(labels_train))
 ```
 La lectura de la matriz nos muestra como el modelo ha predicho muy bien las distintas muestras de train, clasificando erroneamente muy pocos digitos respecto al tamaño del conjunto.
 
@@ -236,10 +239,10 @@ pred_lasso_test_ls=predict(cvfit_ls, newx = features_test, type= "class", s="lam
 #cvfit$`1`>best_lambda
 
 aciertos_train=pred_lasso_train_ls==labels_train
-sprintf("El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
+sprintf("LASSO -> El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
 
 aciertos_test=pred_lasso_test_ls==labels_test
-sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
+sprintf("LASSO -> El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
 
 # Predicciones ridge
 pred_ridge_train=predict(cvfit_rd, newx = features_train, type= "class", s="lambda.min")
@@ -250,10 +253,10 @@ pred_ridge_test=predict(cvfit_rd, newx = features_test, type= "class", s="lambda
 #cvfit$`1`>best_lambda
 
 aciertos_train=pred_ridge_train==labels_train
-sprintf("El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
+sprintf("RIDGE -> El error dentro de la muestra (Ein) es %s", (length(aciertos_train[aciertos_train==F]) / length(aciertos_train)) * 100)
 
 aciertos_test=pred_ridge_test==labels_test
-sprintf("El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
+sprintf("RIDGE -> El error fuera de la muestra (Eout) es %s", (length(aciertos_test[aciertos_test==F]) / length(aciertos_test)) * 100)
 
 ```
 
@@ -323,17 +326,22 @@ Separaremos los datos, manteniendo la proporcion de valores igual en cada conjun
 
 #createFolds (de la misma familia que esta) divide el dataset en k FOLDS, valido para validacion cruzada.
 
-recomendacion: usar lo del litozz para hacer CV y asi poder comparar, debe de salir que no MEJORA nada a regresion lineal simple.
-
+# Dividimos los datos en train y test ya que no tenemos un dataset de train:
+set.seed(1000)
 train.index = createDataPartition(datos$`sound_level`, p = 0.7, list = FALSE)   # Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)
-train = datos[train.index,]
-test = datos[-train.index,]
+train = as.matrix(datos[train.index,])
+test = as.matrix(datos[-train.index,])
 
-features_train = data.matrix(subset(train, select = -5))
-labels_train   = data.matrix(subset(train, select = 5))
-features_test  = data.matrix(subset(test,  select = -5))
-labels_test    = data.matrix(subset(test,  select = 5))
+# Cross validation:
 
+nfolds = 10  # Para elegir el mejor lambda
+
+cv = cv.glmnet(x = train[,-ncol(train)], y = train[,ncol(train)], alpha = 1, nfolds = nfolds)
+train[, ncol(train)]
+best_lambda = cv$lambda.min
+plot(cv$glmnet.fit, "norm", ylim = c(-1,0.6), col = c(1:length(features_train)))
+abline(h = best_lambda, col = "orange")
+sprintf("Mejor lambda en las %s particiones es = %s", kfolds, best_lambda)
 ```
 
 
@@ -344,9 +352,14 @@ En un principio, la regularización en este caso no parece necesaria ya que tene
 Procedemos a ajustar el modelo usando regresión normal sin regularización, con la variable "displacement thickness" ya eliminada.
 
 ```{r}
-ans_reg <- train(sound_level ~ ., data=datos,method="lm")
+ans_reg = train(sound_level ~ ., data=train, method="lm")
 
 summary(ans_reg)
+
+# (CV) Una vez tenemos el mejor lambda, procedemos a ajustar nuestro modelo:
+nparticiones = 5
+
+folds = createFolds(train, nparticiones)
 ```
 
 
@@ -361,59 +374,74 @@ Los valores de error que obtenemos nos dicen que, de la recta de regresión de n
 ```{r}
 # Funcion para evaluar nuestro modelo ya ajustado (errores)
 eval_model <- function(model) {
-        pred_train <- predict(model,newdata = features_train)
-        pred_test <- predict(model,newdata = features_test)
-        
-        # Graficas de dispersion para training y test
-        plot(pred_train,labels_train,xlim=c(100,150),ylim=c(100,150),col=1,
-             pch=19,xlab = "Sound level (dB)",ylab = "Actual Level Sound(dB)")
-        points(pred_test,labels_test,col=2,pch=19) 
-        leg <- c("Training","Testing")
-        legend(100, 150, leg, col = c(1, 2),pch=c(19,19))
-        
-        # Scatter plots of % error on predictions on Training and Testing sets
-        par(mfrow = c(2, 1))
-        par(cex = 0.6)
-        par(mar = c(5, 5, 3, 0), oma = c(2, 2, 2, 2))
-        plot((pred_train - labels_train)* 100 /labels_train,
-             ylab = "% Error of Prediction", xlab = "Index",
-             ylim = c(-5,5),col=1,pch=19)
-        legend(0, 4.5, "Training", col = 1,pch=19)
-        plot((pred_test-labels_test)* 100 /labels_test,
-             ylab = "% Error of Prediction",  xlab = "Index",
-             ylim = c(-5,5),col=2,pch=19)
-        legend(0, 4.5, "Testing", col = 2,pch=19)
-        
-        # Actual data Vs Predictions superimposed for Training and Testing Data
-        plot(1:length(labels_train),labels_train,pch=21,col=1,
-             main = "Training: Actual Level Sound Vs Predicted Level Sound",
-             xlab = "Index",ylab = "Level Sound (dB)")
-        points(1:length(labels_train),pred_train,pch=21,col=2)
-        #leg <- c("Training","Predicted Training")
-        legend(0, 140, c("Actual","Predicted"), col = c(1, 2),pch=c(21,21))
-        plot(1:length(labels_test),labels_test,pch=21,col=1,
-             main = "Testing: Actual Level Sound Vs Predicted Level Sound",
-             xlab = "Index",ylab = "Level Sound (dB)")
-        points(1:length(labels_test),pred_test,pch=21,col="red")
-        legend(0, 140, c("Actual","Predicted"), col = c(1, 2),pch=c(21,21))
-        
-        ## Line graph of errors
-        plot(pred_train-labels_train,type='l',ylim=c(-5,+5),
-             xlab = "Index",ylab = "Actual - Predicted",main="Training")        
-        plot(pred_test-labels_test,type='l',ylim=c(-5,+5),
-             xlab = "Index",ylab = "Actual - Predicted",main="Testing")
-                
-        ISRME<- sqrt(mean((pred_train-labels_train)^2))
-        OSRME<- sqrt(mean((pred_test-labels_test)^2))
-        
-        return(c(ISRME,OSRME))
+    pred_train <- predict(model,newdata = features_train)
+    pred_test <- predict(model,newdata = features_test)
+    
+    # Graficas de dispersion para training y test
+    plot(pred_train,labels_train,xlim=c(100,150),ylim=c(100,150),col=1,
+         pch=19,xlab = "Sound level (dB)",ylab = "Actual Level Sound(dB)")
+    points(pred_test,labels_test,col=2,pch=19) 
+    leg <- c("Training","Testing")
+    legend(100, 150, leg, col = c(1, 2),pch=c(19,19))
+    
+    # Scatter plots of % error on predictions on Training and Testing sets
+    par(mfrow = c(2, 1))
+    par(cex = 0.6)
+    par(mar = c(5, 5, 3, 0), oma = c(2, 2, 2, 2))
+    plot((pred_train - labels_train)* 100 /labels_train,
+         ylab = "% Error of Prediction", xlab = "Index",
+         ylim = c(-5,5),col=1,pch=19)
+    legend(0, 4.5, "Training", col = 1,pch=19)
+    plot((pred_test-labels_test)* 100 /labels_test,
+         ylab = "% Error of Prediction",  xlab = "Index",
+         ylim = c(-5,5),col=2,pch=19)
+    legend(0, 4.5, "Testing", col = 2,pch=19)
+    
+    # Actual data Vs Predictions superimposed for Training and Testing Data
+    plot(1:length(labels_train),labels_train,pch=21,col=1,
+         main = "Training: Actual Level Sound Vs Predicted Level Sound",
+         xlab = "Index",ylab = "Level Sound (dB)")
+    points(1:length(labels_train),pred_train,pch=21,col=2)
+    #leg <- c("Training","Predicted Training")
+    legend(0, 140, c("Actual","Predicted"), col = c(1, 2),pch=c(21,21))
+    plot(1:length(labels_test),labels_test,pch=21,col=1,
+         main = "Testing: Actual Level Sound Vs Predicted Level Sound",
+         xlab = "Index",ylab = "Level Sound (dB)")
+    points(1:length(labels_test),pred_test,pch=21,col="red")
+    legend(0, 140, c("Actual","Predicted"), col = c(1, 2),pch=c(21,21))
+    
+    ## Line graph of errors
+    plot(pred_train-labels_train,type='l',ylim=c(-5,+5),
+         xlab = "Index",ylab = "Actual - Predicted",main="Training")        
+    plot(pred_test-labels_test,type='l',ylim=c(-5,+5),
+         xlab = "Index",ylab = "Actual - Predicted",main="Testing")
+            
+    ISRME<- sqrt(mean((pred_train-labels_train)^2))
+    OSRME<- sqrt(mean((pred_test-labels_test)^2))
+    
+    return(c(ISRME,OSRME))
 }
-
-reg=eval_model(ans_reg)
 
 # Errores fuera y dentro de la muestra
 
-reg
+sprintf("Error dentro del train = %s", eval_model(ans_reg)[1])
+sprintf("Error dentro del test = %s", eval_model(ans_reg)[2])
+
+# Comprobación errores cross validation
+
+ein = eout = 0
+
+for (i in 1:nparticiones) {
+    cv_reg = folds[i](sound_level ~ ., data=train, method="lm")
+    ein = ein + eval_model(ans_reg)[1]
+    eout = eout + eval_model(ans_reg)[2]
+    
+    sprintf("Error dentro del train, particion %s es %s", i, eval_model(ans_reg)[1])
+    sprintf("Error dentro del test, particion %s es %s", i, eval_model(ans_reg)[2])
+}
+
+sprintf("Ein medio con %s particiones = %s", nparticiones, ein/nparticiones)
+sprintf("Eout medio con %s particiones = %s", nparticiones, eout/nparticiones)
 
 # Preparación de los datos
 
