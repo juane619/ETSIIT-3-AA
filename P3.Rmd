@@ -1,7 +1,7 @@
 ---
-title: "P3"
-author: "JuanE y Adri"
-date: "5 May 2018"
+title: "Práctica 3"
+author: "Juan Emilio García Martínez y Adrián Jesús Peña Rodríguez"
+date: "19 May 2018"
 output: pdf_document
 ---
 
@@ -12,7 +12,7 @@ library(glmnet)
 library(caret)
 library(nnet)
 library(mlogit)
-
+set.seed(1000)
 ```
 
 # 1. AJUSTE DE MODELOS LINEALES
@@ -340,7 +340,6 @@ Separaremos los datos, manteniendo la proporcion de valores igual en cada conjun
 #separamos los datos en conjuntos de train y test
 
 # Dividimos los datos en train y test ya que no tenemos un dataset de train:
-set.seed(1000)
 train.index = createDataPartition(datos$`sound_level`, p = 0.7, list = FALSE)   # Igual que StratifiedKFolds de SKlearn, mantiene la proporción de valores (iguales)
 train = as.matrix(datos[train.index,])
 test = as.matrix(datos[-train.index,])
