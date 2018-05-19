@@ -1,9 +1,12 @@
 ---
-title: "Práctica 3"
+title: "Trabajo 3: Programación"
 author: "Juan Emilio García Martínez y Adrián Jesús Peña Rodríguez"
 date: "19 May 2018"
 output: pdf_document
 ---
+Práctica realizada por Juan Emilio García Martínez y Adrián Jesús Peña Rodríguez.
+
+Para el correcto funcionamiento de la práctica es necesario tener instaladas y activadas las siguientes librerias: "glmnet", "caret", "nnet", "mlogit" y opcionalmente "doParallel" para paralelizar algunas funciones costosas computacionalmente.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -12,6 +15,8 @@ library(glmnet)
 library(caret)
 library(nnet)
 library(mlogit)
+
+library(doParallel)
 set.seed(1000)
 ```
 
@@ -108,7 +113,7 @@ train[,-ncol(train)]=apply(train[,-ncol(train)],2,normalized)
 
 En concreto, usaremos (ajustaremos) un modelo de regresión LASSO (R-LASSO). Este modelo de regresión lineal selecciona las variables con coeficiente mayor de un umbral prefijado. La ventaja de este modelo es que es una técnica de **regresión lineal ya regularizada**, es decir, como los datos de entrada son pixeles, es decir, pueden llegar a ser muy redundantes, dicho modelo ya penaliza variables que no dicen nada acerca de la salida, disminuyendo el correspondiente sobreajuste que esto pudiera ocasionar y además reduciendo el error fuera de la muestra.
 
-El hiperparámetro lambda: vamos a estimar el mejor lambda mediante validacion cruzada. El mejor lambda es aquél que penaliza minimizando el error de validacion cruzada, es decir, cvm.
+El **hiperparámetro** lambda: vamos a estimar el mejor lambda mediante validacion cruzada. El mejor lambda es aquél que penaliza minimizando el error de validacion cruzada, es decir, cvm.
 
 Como se ha mencionado antes, este modelo se intuye que será el principal, pero para tener otro con el que comparar e ir viendo la necesidad de regularización, primero ajustaremos el modelo de regresión logísitca sin regualrizar.
 
@@ -116,7 +121,7 @@ El paquete **glmnet** de R nos permite aplicar todo lo antes mencionado.
 
 El paquete **glmnet** a parte de ajustar el modelo también hace un procesamiento de los datos el cual es muy necesario para el correcto funcionamiento posterior del modelo de regresión logística. Los pasos que sigue esta libreria para preprocesar son:
 
-**glmnet** es un set de procedimientos extremadamente eficientes para ajustar todo el procedimiento de regularización lasso (también puede hacer elastic-net pero usaremos solo lasso) para regresión lineal, modelos de regresión logística multinomial (nuestro caso), regresión de Poisson y el modelo de Cox.
+glmnet es un set de procedimientos extremadamente eficientes para ajustar todo el procedimiento de regularización lasso (también puede hacer elastic-net pero usaremos solo lasso) para regresión lineal, modelos de regresión logística multinomial (nuestro caso), regresión de Poisson y el modelo de Cox.
 Los algoritmos que contiene usan lo que se conoce como descenso cíclico coordinado, que optimiza sucesivamente la función objetivo sobre cada parámetro con otros fijos y cicla hasta que converge.
 
 Ahora hablemos del **conjunto de validación**: usaremos la funcin cv.glmnet() para ajustar el modelo usando cross-validation. Por defecto, el metodo divide el conjunto de entrenamiento antes creado en 10 trozos no superpuestos de aproximadamente el mismo tamaño, utilizando el primero de ellos como **validacion** y el resto se usa para el ajuste.
@@ -130,7 +135,6 @@ rln=multinom(digit ~ ., data = train)
 
 ```{r}
 #Para parelelizar (demasiado tiempo secuencialmente)
-library(doParallel)
 registerDoParallel(cores=8)
 
 # Elegimos el mejor lambda por CV de, por ejemplo, 10 particiones (por defecto). Si utilizaramos tantas particiones como numero de muestras que tenemos, estariamos hablando de leave-one-out CV, en este caso no es recomendable por el tamaño del dataset.
@@ -141,11 +145,15 @@ cvfit_ls=cv.glmnet(features_train, labels_train, family="multinomial", type.mult
 
 best_lambda_ls=cvfit_ls$lambda.min
 
+best_lambda_ls
+
 #Ajuste del modelo (R-ridge)
 
 cvfit_rd=cv.glmnet(features_train, labels_train, family="multinomial", type.multinomial = "grouped", parallel = TRUE, nfolds = 5, alpha=0)
 
 best_lambda_rd=cvfit_rd$lambda.min
+
+best_lambda_rd
 
 ```
 
@@ -349,24 +357,9 @@ features_test=test[,-ncol(test)]
 labels_train=train[,ncol(train)]
 labels_test=test[,ncol(test)]
 
-# Cross validation:
 
-nfolds = 10  # Para elegir el mejor lambda
 
-cv = cv.glmnet(x = train[,-ncol(train)], y = train[,ncol(train)], alpha = 1, nfolds = nfolds)
-
-best_lambda = cv$lambda.min
-
-old.par = par(mfrow=c(2,2))
-
-plot(cv$glmnet.fit, "norm", ylim = c(-1,0.6), col = c(1:ncol(train)))
-abline(h = best_lambda, col = "orange")
-
-old.par = par(mfrow=c(2,2))
-
-sprintf("Mejor lambda en las %s particiones es = %s", nfolds, best_lambda)
 ```
-La gráfica nos muestra que quita radicalmente dos de variables mas, cosa que puede perjudicar a nuestro modelo seriamente.
 
 ### 5. Regularización, modelo a usar e hyperparámetros.
 
@@ -375,16 +368,36 @@ En un principio, la regularización en este caso no parece necesaria ya que tene
 Procedemos a ajustar el modelo usando regresión normal sin regularización, con la variable "angle of attack" ya eliminada.
 
 ```{r}
+
 #Ajuste del modelo de regresion lineal sin regularizar
 ans_reg = train(sound_level ~ ., data=train, method="lm")
 
-#summary(ans_reg)
+
+# Hallamos lambda mediante cross validation:
+
+nfolds = 10  # Para elegir el mejor lambda
+
+cv = cv.glmnet(x = train[,-ncol(train)], y = train[,ncol(train)], alpha = 1, nfolds = nfolds)
+
+best_lambda = cv$lambda.min
+
+sprintf("Mejor lambda en las %s particiones es = %s", nfolds, best_lambda)
+
+old.par = par(mfrow=c(2,2))
+
+plot(cv$glmnet.fit, "norm", ylim = c(-1,0.6), col = c(1:ncol(train)))
+abline(h = best_lambda, col = "orange")
+
+old.par = par(mfrow=c(2,2))
 ```
 
+La gráfica nos muestra que, usando regularización, se eliminan dos variables mas, cosa que puede perjudicar a nuestro modelo seriamente.
 
 ### 8. Métrica
 
-Root Mean Square Error: es la desviación estándar de los residuos (errores de predicción). Los residuos son una medida de cuán lejos están los puntos de datos de la línea de regresión; RMSE es una medida de la dispersión de estos residuos. En otras palabras, le dice qué tan concentrado está la información en la línea de mejor ajuste. El error cuadrático medio se usa comúnmente en la climatología, la predicción y el análisis de regresión para verificar los resultados experimentales.
+Para medir nuestros modelos usaremos Root Mean Square Error: es la desviación estándar de los residuos (errores de predicción). Los residuos son una medida de cuán lejos están los puntos de datos de la línea de regresión; RMSE es una medida de la dispersión de estos residuos. En otras palabras, le dice qué tan concentrado está la información en la línea de mejor ajuste. El error cuadrático medio se usa comúnmente en la climatología, la predicción y el análisis de regresión para verificar los resultados experimentales.
+
+También nos apoyaremos en el término R-squared, para ver la bondad del ajuste.
 
 Los valores de error que obtenemos nos dicen que, de la recta de regresión de nuestro modelo, las predicciones se desvian de la recta en una media del error obtenido (SRM).
 
@@ -392,7 +405,6 @@ Los valores de error que obtenemos nos dicen que, de la recta de regresión de n
 
 ```{r}
 # Funcion para evaluar nuestro modelo ya ajustado (errores)
-
 
 eval_model = function(model) {
     pred_train = predict(model,newdata = features_train)
@@ -487,6 +499,10 @@ for (i in 1:nparticiones) {
 sprintf("Ein medio con %s particiones = %s", nparticiones, ein/nparticiones)
 sprintf("Eout medio con %s particiones = %s", nparticiones, eout/nparticiones)
 
-
+summary(ans_reg)
 ```
+Tras ver que la regularización perjudica la calidad del modelo en este caso, nos quedamos con un **modelo de regresión sin regularización**, el cual lo medimos dividiendo solo una vez y usando validación cruzada (mayor precisión del error).
+
 Como podemos ver, el error tomando un conjunto de train y test del dataset proporcionado es mucho menor que el error medido con Cross-Validation, ya que este obtiene el error medio tomando conjuntos de test-train cinco veces en este caso, por lo que podemos ver que nuestro modelo se comporta medianamente bien ya que el ruido predicho **se puede desviar en unos 14-15 dB de media**, del ruido real que pudiera generarse.
+
+El valor de R-squared, proporcionado por el método summary(), es igual a 0.48, no está cerca de 1 ni de 0, por lo que nos indica que la fiabilidad del modelo no es del todo buena, lo que quiere decir, que aunque los errores dentro y fuera de la muestra no son malos, en la práctica las predicciones de ruido pudieran ser algo peor.
