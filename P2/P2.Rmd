@@ -1,0 +1,710 @@
+---
+title: "TRABAJO 2: Programación"
+author: "Juan Emilio García Martínez"
+date: "20 de Abril de 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+A continuación, se mostrará el resultado de la práctica 2 de Aprendizaje Automático conteniendo tanto el código utilizado para su desarrollo como las valoraciones y decisiones adoptadas en el desarrollo de los apartados.
+
+
+Se establece la semilla (aleatorios)
+```{r}
+```
+
+
+# Ejercicio 1. EJERCICIO SOBRE LA COMPLEJIDAD DE H Y EL RUIDO
+
+```{r}
+#DEFINICIONES DE FUNCIONES PRINCIPALES DEL EJERCICIO 1
+
+# Funcion simula_unif(N,dim,sigma)
+# Conjunto de longitud N de vectores de dimension dim, conteniendo
+# numeros aleatorios de una distribucion uniforme entre [rango[1], rango[2]]
+# Por defecto genera 2 puntos entre [0,1] de 2 dimensiones 
+
+simula_unif = function (N=2,dims=2, rango = c(0,1)){
+  m = matrix(runif(N*dims, min=rango[1], max=rango[2]), nrow = N, ncol=dims, byrow=T)
+  
+  m
+}
+
+# funcion simula_gaus(N, dim, sigma) que genera un
+# conjunto de longitud N de vectores de dimension dim, conteniendo numeros 
+# aleatorios gaussianos de media 0 y varianzas dadas por el vector sigma.
+# por defecto genera 2 puntos de 2 dimensiones 
+
+simula_gaus = function(N=2,dim=2,sigma){
+  if (missing(sigma)) stop("Debe dar un vector de varianzas")
+  sigma = sqrt(sigma)  # para la generacion se usa sd, y no la varianza
+  
+  if(dim != length(sigma)) stop ("El numero de varianzas es distinto de la dimensiÃ³n")
+  
+  simula_gauss1 = function() rnorm(dim, sd = sigma) # genera 1 muestra, con las desviaciones especificadas
+  m = t(replicate(N,simula_gauss1())) # repite N veces, simula_gauss1 y se hace la traspuesta
+}
+
+
+#  simula_recta(intervalo) una funcion que calcula los parametros
+#  de una recta aleatoria, y = ax + b, v=(a,b), que corte al cuadrado [-50,50]x[-50,50]
+#  (Para calcular la recta se simulan las coordenadas de 2 ptos dentro del 
+#  cuadrado y se calcula la recta que pasa por ellos), 
+#  se pinta o no segun el valor de parametro visible
+
+simula_recta = function (intervalo = c(-1,1), visible=F){
+  ptos = simula_unif(2,2,intervalo) # se generan 2 puntos
+  a = (ptos[1,2] - ptos[2,2]) / (ptos[1,1]-ptos[2,1]) # calculo de la pendiente
+  b = ptos[1,2]-a*ptos[1,1]  # calculo del punto de corte
+  
+  if (visible) {  # pinta la recta y los 2 puntos
+    if (dev.cur()==1) # no esta abierto el dispositivo lo abre con plot
+      plot(1, type="n", xlim=intervalo, ylim=intervalo)
+    points(ptos,col=3)  #pinta en verde los puntos
+    abline(b,a,col=3)   # y la recta
+  }
+  c(a,b) # devuelve el par pendiente y punto de corte
+}
+```
+
+
+### 1. Dibujar una gráfica con la nube de puntos de salida correspondiente.
+
+#### a) Considere *N=50, dim=2, rango=[-50,+50]* con *simula_unif(N,dim,rango)*.
+
+```{r}
+xa=simula_unif(50, dims = 2, rango = c(-50,50))
+plot(xa, main = "1a")
+
+```
+
+#### b) Considere *N=50, dim=2, sigma=[5,7]* con *simula_gaus(N,dim,sigma)*.
+
+
+```{r}
+xb=simula_gaus(50, 2, sigma = c(5,7))
+plot(xb, main = "1b")
+
+```
+
+### 2. Con ayuda de *simula_unif()* generar una muestra de puntos 2D a los que vamos añadir una etiqueta usando el signo de la función *f(x,y)=y-ax-b*, es decir, el signo de la distancia de cada punto a la recta simulada con *simula_recta()*.
+
+```{r}
+#sample size
+sample_size=50
+
+#Definimos f: ayuda para obtener labels.
+f=function(vec, recta){
+  vec[2]-recta[1]*vec[1]-recta[2]
+}
+
+#getLabel: labels of points
+getLabel= function(value){
+  sign(value)
+}
+
+```
+
+#### a) Dibujar una gráfica donde los puntos muestren el resultado de su etiqueta, junto con la recta usada para ello. (Observe que todos los puntos están bien clasificados respecto de la recta)
+
+```{r}
+
+#obtenemos una muestra de 1000 puntos aleatorios
+points2a=simula_unif(N = sample_size, dims = 2, c(-50,50))
+
+#generamos recta aleatoria en el intervalo [-50,50]
+v=simula_recta()
+
+#para cada punto, obtenemos su signo (depende de la recta)
+val_labels2a=apply(points2a, MARGIN = 1, FUN = f, recta=v)
+labels2a=getLabel(val_labels2a)
+
+plot(points2a, main="2a", xlab="x", ylab="y", col=labels2a+2)
+#Cuidado al pintar linea, p. corte + pendiente (no al reves)
+abline(v[2], v[1], col=4)
+
+```
+
+
+#### b)  Modifique de forma aleatoria un 10 % etiquetas positivas y otro 10 % de negativas y guarde los puntos con sus nuevas etiquetas. Dibuje de nuevo la gráfica anterior. (Ahora hay puntos mal clasificados respecto de la recta)
+
+
+```{r}
+
+#Function intNoise: introducimos percent*100 de ruido en las etiquetas lbls
+
+intNoise= function(lbls, percent=0.1){
+  n_pos=which(lbls==1)
+  n_neg=which(lbls==-1)
+  index_change_pos=sample(n_pos, percent*length(n_pos))
+  index_change_neg=sample(n_neg, percent*length(n_neg))
+  
+  lbls[index_change_pos]=-lbls[index_change_pos]
+  lbls[index_change_neg]=-lbls[index_change_neg]
+  lbls
+}
+
+labels2b=intNoise(labels2a)
+
+#Se pintan las etiquetas con el ruido y la linea
+plot(points2a, main="2b", xlab="x", ylab="y", col=labels2b+2)
+abline(v[2], v[1], col=4)
+
+```
+
+### 3. Supongamos ahora que las siguientes funciones definen la frontera de clasificación de los puntos de la muestra en lugar de una recta:
+
++ $f(x,y)=(x-10)^2+(y-20)^2-400$
++ $f(x,y)=0.5(x+10)^2+(y-20)^2-400$
++ $f(x,y)=0.5(x-10)^2-(y+20)^2-400$
++ $f(x,y)=y-20x^2-5x+3$
+
+Visualizar el etiquetado generado en 2b junto con cada una de las graficas de cada una de las funciones. Comparar las formas de las regiones positivas y negativas de estas nuevas funciones con las obtenidas en el caso de la recta ¿Son estas funciones más complejas mejores clasificadores que la función lineal? ?En que ganan a la función lineal? Explicar el razonamiento.
+
+```{r}
+
+#Funcion de dibujado de la frontera de clasificacion
+drawe=function(f, rango){
+  x_graph=y_graph=seq(-50,50,length.out = 100)
+  z=outer(x_graph, y_graph, f)
+  if(dev.cur()==1) #no esta abierto, lo abre con plot
+    plot(1,type="n", xlim=rango, ylim=rango)
+  contour(x_graph, y_graph, z, levels=0, drawlabels = FALSE, xlim=rango, ylim=rango, xlab="x", ylab="y", col=4)
+}
+
+#definimos las funciones
+f1= function(x,y){
+  (x-10)^2+(y-20)^2-400
+}
+
+f2= function(x,y){
+  0.5*(x+10)^2+(y-20)^2-400
+}
+
+f3= function(x,y){
+  0.5*(x-10)^2-(y+20)^2-400
+}
+
+f4= function(x,y){
+  y-20*x^2-5*x+3
+}
+
+par(mfrow=c(1,2))
+
+#Para cada funcion, comparamos la division en el etiquetado generado en 2b, 
+#con la recta y con las fronteras de clasificacion de cada funcion
+
+#f1
+plot(points2a, main="3", xlab="x", ylab="y", col=labels2b+2)
+abline(v[2], v[1], col=4)
+
+drawe( f1, c(-50,50))
+points(points2a, main="3", xlab="x", ylab="y", col=labels2b+2)
+
+#f2
+plot(points2a, main="3", xlab="x", ylab="y", col=labels2b+2)
+abline(v[2], v[1], col=4)
+
+drawe( f2, c(-50,50))
+points(points2a, main="3", xlab="x", ylab="y", col=labels2b+2)
+
+#f3
+plot(points2a, main="3", xlab="x", ylab="y", col=labels2b+2)
+abline(v[2], v[1], col=4)
+
+drawe( f3, c(-50,50))
+points(points2a, main="3", xlab="x", ylab="y", col=labels2b+2)
+
+#f4
+plot(points2a, main="3", xlab="x", ylab="y", col=labels2b+2)
+abline(v[2], v[1], col=4)
+
+drawe( f4, c(-50,50))
+points(points2a, main="3", xlab="x", ylab="y", col=labels2b+2)
+
+
+```
+
+Se puede ver como hay puntos etiquetados como positivos en la zona de negativos y viceversa.
+Se puede ver que pese a utilizar funciones mucho mas complejas, no se ha obtenido casi ninguna mejora en cuanto a clasificación. Esto es debido a que las etiquetas han sido generadas a través de una función lineal, es decir, ninguna otra función será capaz de ajustar mejor los datos.
+Da lo mismo las regiones positivas o negativas de cada función, es fácil ver como no serán capaces de ajustarse un etiquetado lineal, es decir, no ganamos nada en mejora cuando hablamos de clasificar utilizando este tipo de funciones con mas complejidad.
+Si bien es cierto que una función mas compleja puede ser mejor clasificadora dada una muestra, pero muchas veces, o bien dado al ruido, o bien debido al sobreajuste, lo suyo es quedarse con la función mas simple posible que clasifique de la mejor manera posible (tarea difícil).
+
+# Ejercicio 2. MODELOS LINEALES
+
+### 1. **Algoritmo Perceptron:** implementar ajusta_PLA(datos, label, max_iter, vini).
+
+```{r}
+#
+# function ajusta_PLA(datos, label, max_iter, vini):
+# Dado un valor vini, un conjunto de datos (caracteristicas) y un conjunto etiquetas label correspondientes a dichas caracterísitcas, encuentra la mejor h posible (pesos) en un numero max_iter maximo de iteraciones.
+# Devuelve a,b donde a es la pendiente y b es el punto de corte y el num de iteraciones.
+
+# Va comprobando si el vector de pesos por el dato que se esta inspeccionando en ese instante, es igual a la etiqueta que deberia de tener, si coincide, nada, si no, se reajusta el perceptron.
+#
+
+ajusta_PLA= function(datos, labels, max_iter=10, vini=c(0,0,0)){
+  w= vini
+  found= F
+  i=0
+  n_rows= nrow(datos)
+  
+  while(!found & i<=max_iter){
+    found=T
+    
+    for(j in 1:n_rows){
+      point=datos[j,]
+      
+      if(sign(crossprod(point, w)) != labels[j]){
+        w= w+point*labels[j]
+        
+        found=F
+      }
+    }
+    
+    i=i+1
+  }
+  
+  list(recta=c(-w[1]/w[2], -w[3]/w[2]), iters=i)
+}
+
+```
+
+
+#### a) Ejecutar el algoritmo PLA con los datos simulados en los apartados 2a de la seccion 1. Inicializar el algoritmo con: a) el vector cero y, b) con vectores de números aleatorios en [0, 1] (10 veces). Anotar el número medio de iteraciones necesarias en ambos para converger. Valorar el resultado relacionando el punto de inicio con el número de iteraciones. 
+
+```{r}
+#añadimos 1 a todos los puntos obtenidos en 2a
+points2a1=cbind(points2a, 1)
+
+# a) 
+#   a) inicializado al vector cero
+
+res21a=ajusta_PLA(points2a1, labels2a, 1000, c(0,0,0))
+print(paste("Obtenidos los coeficientes en ", res21a$iters, " iteraciones."))
+
+plot(points2a, main="1aa", xlab="x", ylab="y", col=labels2a+2)
+abline(res21a$recta[2], res21a$recta[1], col=4)
+
+#   b) inicializando con valores aleatorios
+media_iters=0
+
+for(i in 1:10){
+  vini=runif(3, min=0, max=1)
+  res21ab= ajusta_PLA(points2a1, labels2a, 1000, vini)
+  media_iters=media_iters+res21ab$iters
+}
+
+media_iters=media_iters/10
+
+print(paste("Obtenidos los coeficientes en una media de ", media_iters, " iteraciones."))
+
+plot(points2a, main="1ab", xlab="x", ylab="y", col=labels2a+2)
+abline(res21ab$recta[2], res21ab$recta[1], col=4)
+
+```
+Como vemos, en el apartado a) (vector cero) los coeficientes óptimos de la recta de separación del hiperplano se obtienen en un número de iteraciones que depende de como estén los puntos y del punto de inicio, mientras que en el apartado b) (coeficientes aleatorios en [0,1], 10 veces) se obtienen en una media de iteraciones que vuelve a depender del punto de inicio establecido (ejecutadas varias veces las 10 veces), por lo que se puede ver como influye significativamente el punto de inicio usado, ya que, "por suerte" podemos tener un punto de inicio que mejore antes cada w y converga mas rápido o que esto no ocurra. En este caso vemos como el a) se comporta mejor (con estas muestras) pero tras probarlo mas veces, hay veces que el apartado a) necesita de mas iteraciones.
+
+#### b) Hacer lo mismo que antes usando ahora los datos del apartado 2b de la sección 1. ¿Observa algún comportamiento diferente? En caso afirmativo diga cual y las razones para que ello ocurra.
+
+```{r}
+
+#ya tenemos los puntos de 2a con el 1 añadido a cada punto
+
+# b) 
+#   a) inicializado al vector cero
+
+res21ba=ajusta_PLA(points2a1, labels2b, 1000, c(0,0,0))
+print(paste("Obtenidos los coeficientes en ", res21ba$iters, " iteraciones."))
+
+plot(points2a, main="1ba", xlab="x", ylab="y", col=labels2b+2)
+abline(res21ba$recta[2], res21ba$recta[1], col=4)
+
+#   b) inicializando con valores aleatorios
+media_iters=0
+
+for(i in 1:10){
+  vini=runif(3, min=0, max=1)
+  res21bb= ajusta_PLA(points2a1, labels2b, 1000, vini)
+  media_iters=media_iters+res21bb$iters
+}
+
+media_iters=media_iters/10
+
+print(paste("Obtenidos los coeficientes en una media de ", media_iters, " iteraciones."))
+
+plot(points2a, main="1bb", xlab="x", ylab="y", col=labels2b+2)
+abline(res21bb$recta[2], res21bb$recta[1], col=4)
+```
+Está claro que con el ruido introducido en 2b es imposible (ya lo vimos en el ejercicio anterior) que haya una función la cual clasifique perfectamente dicha muestra, ya que, aunque se ajustara a la muestra perfectamente, al ser puro ruido, los datos que en el futuro quisiéramos clasificar se haría de mala manera ya que tendrian en cuenta dicho ruido. 
+Al algoritmo PLA  le pasa algo parecido, por cada punto de ruido que se encuentra(mal clasificado) se intenta actualizar, es decir, se cree que el propio ruido está bien clasificado cuando no es así, y como es prácticamente imposible quedarse de manera que divida la muestra perfecta en dos partes, lo hace hasta el *número máximo de iteraciones* y lo hace de la mejor manera posible ya que dentro de lo que cabe, solo hay un 10% de ruido en cada tipo de etiquetas, es decir, se ajusta mas bien que mal porque la inmensa parte de la muestra se puede decir que no es ruido.
+
+### 2. **Regresión Logísitca:** crearemos nuestra propia función objetivo *f* (una probabilidad en este caso) y nuestro conjunto de datos *D* para ver cómo funciona regresión logística. Supondremos por simplicidad que *f* es una probabilidad con valores 0/1 y por tanto que la etiqueta *y* es una función determinista de x. 
+Consideremos *d = 2* para que los datos sean visualizables, y sea *X = [0, 2] x [0, 2]* con probabilidad uniforme de elegir cada *xEX*. Elegir una línea en el plano que pase por X como la frontera entre $f(x) = 1$ (donde y toma valores +1) y $f(x) = 0$ (donde y toma valores -1), para ello seleccionar dos puntos aleatorios del plano y calcular la línea que pasa por ambos. Seleccionar *N = 100* puntos aleatorios {x~n~} de *X* y evaluar las respuestas {y~n~} de todos ellos respecto de la frontera elegida. 
+
+
+#### a) Implementar Regresión Logística(RL) con Gradiente Descendente Estocástico (SGD) bajo las siguientes condiciones: 
++ Inicializar el vector de pesos con valores 0. 
++ Parar el algoritmo cuando ||w (t-1) - w(t) || < 0.01, donde w(t) denota el vector de pesos al final de la época t. Una época es un pase completo a través de los N datos. 
++ Aplicar una permutación aleatoria, (1, 2, .., N), en el orden de los datos antes de usarlos en cada época del algoritmo. 
++ Usar una tasa de aprendizaje de nu = 0.01 
+
+```{r}
+#IMPLEMENTACION RL_SGD
+
+#Norma vectorial entre dos vectores
+normVectors=function(w1, w2){
+  sqrt(sum(w1-w2)^2)
+}
+
+#Funcion del calculo de Ein(error en la muestra)
+calcEin=function(data, labels, w){
+  sum(log(1+exp(-labels*t(w)%*%t(data))))/nrow(data)
+}
+
+#Implementacion del algoritmo Regresión Logistica con Gradiente Descendente Estocástico.
+RL_SGD=function(data, labels, wini, max_iter, mu, tol){
+   rows_data= nrow(data)
+   size_minibatch=rows_data
+   seguir=T
+   i=0
+   
+   while(i<max_iter & seguir){
+     wold=wini
+     
+     pos_rand= sample(rows_data, size_minibatch)
+     grad=0
+     
+     for(j in pos_rand){
+       grad=grad-(labels[j]*data[j,])/c(1+exp(labels[j]*t(wini)%*%data[j,]))
+     }
+     #grad=-grad/size_minibatch
+     wini=wini-mu*grad
+     
+     if(normVectors(wold, wini)< tol)
+       seguir=F
+    
+     i=i+1
+   }
+   
+   list(w=wini, iters=i)
+ }
+
+#Utilizamos la funcion pasoARecta para pintar la linea una vez obtenidos los pesos
+pasoARecta= function(w){
+      if(length(w)!= 3)
+        stop("Solo tiene sentido con 3 pesos")
+      a = -w[1]/w[2]
+      b = -w[3]/w[2]
+      c(a,b)
+}
+
+#Ajustamos parametros
+d=2
+N=100
+iters=5000
+wini=c(0,0,0)
+nu=0.01
+tol=0.01
+
+#Utilizando simula_unif, crearemos los datos D
+D=simula_unif(N, d, c(0,2))
+
+#utilizando simula_recta, creamos la linea en el plano que pasa por X como frontera.
+line22a= simula_recta(c(0,2))
+
+#Al igual que en la seccion anterior, evaluamos para obtener etiquetas respecto a la linea generada
+val_labels22a=apply(D, MARGIN = 1, FUN = f, recta=line22a)
+labels22a=getLabel(val_labels22a)
+labels22a[labels22a==0]=1
+
+#pintamos
+plot(D, main="2", xlab="x", ylab="y", col=labels22a+2)
+abline(line22a[2], line22a[1], col=4)
+
+#Añadimos termino independiente a D
+D=cbind(D,1)
+
+#Una vez tenemos D, la linea frontera y las etiquetas de cada xi de D:
+
+#Realizamos RL con un maximo de 1000 iteraciones y tol=0.01
+res= RL_SGD(D, labels22a, wini, iters, nu, tol)
+
+#Aunque no se pide, pintamos los datos junto a la linea para ver el resultado del ajuste
+rectaRL=pasoARecta(res$w)
+
+#Comparamos con el ajuste perfecto
+par(mfrow=c(1,2))
+plot(D, main="original", xlab="x", ylab="y", col=labels22a+2)
+abline(line22a[2], line22a[1], col=4)
+plot(D, main="RLSGD", xlab="x", ylab="y", col=labels22a+2)
+abline(rectaRL[2], rectaRL[1], col=4)
+
+#Calculamos error Ein
+Ein=calcEin(D, labels22a, res$w)
+print(paste("El error en la muestra es de ",Ein*100," %"))
+ 
+
+```
+Como sabemos, regresión logística es especialmente útil cuando tenemos dos posibles respuestas (variable de salida dicotómica). 
+Acabamos de ajustar nuestro modelo con el método implementado (Regresión Logísitca con Gradiente Descendente Estocástico) 
+
+#### b) Usar la muestra de datos etiquetada para encontrar nuestra solución *g* y estimar *Eout* usando  para ello un número suficientemente grande de nuevas muestras (>999).
+
+```{r}
+set.seed(1)
+
+#Creamos mas muestras de "testeo"
+datosEout=simula_unif(1000,2,c(0,2))
+
+#Al igual que en la seccion anterior, evaluamos para obtener etiquetas respecto a la linea generada
+val_labels22b=apply(datosEout, MARGIN = 1, FUN = f, recta=line22a)
+labels22b=getLabel(val_labels22b)
+labels22b[labels22b==0]=1
+
+#pintamos
+line22b= pasoARecta(res$w)
+plot(datosEout, main="2", xlab="x", ylab="y", col=labels22b+2)
+abline(line22b[2], line22b[1], col=4)
+
+#Calculamos Eout
+datosEout=cbind(datosEout, 1)
+Eout= calcEin(datosEout, labels22b, res$w)
+
+print(paste("El error fuerea de la muestra es de ",Eout*100," %"))
+```
+
+Acabamos de generar muestras aleatorias de testeo para probar nuestro modelo y vemos como el error es un poco mayor, pero no mucho, por lo que podemos concluir que el modelo se ajusta bien tanto al conjunto de entrenamiento como fuera de este (para dichas muestras generadas).
+
+
+# 3. BONUS
+
+## *Clasificación de Dígitos.*  Considerar el conjunto de datos de los dígitos manuscritos y seleccionar las muestras de los dígitos 4 y 8. Usar los ficheros de entrenamiento (training) y test que se proporcionan. Extraer las características de intensidad promedio y simetría en la manera que se indice en el ejercicio 3 del trabajo 1.
+
+Se establece el directorio de trabajo:
+```{r}
+#setwd("")
+```
+
+### 1. Plantear un problema de clasificación binaria que considere el conjunto de entrenamiento como datos de entrada para aprender la función g.
+
+El planteamiento del problema sería, dadas unas muestras creadas por nosotros (intensidad y simetría) dado un conjunto de datos con "toda" la información mezclada, aprender una función **g** a partir de nuestro conjunto de entrenamiento(muestras creadas) que estime la función **f**, la cual clasifica perfectamente unas muestras dadas diciéndonos si dichas muestras pertenecen al dígito 4 o al dígito 8, haciendo corresponder estos al -1, 1 respectivamente.
+Dicha función g(pesos) primero la obtendremos con regresión lineal y después con PLA-pocket.
+Una vez hecho esto, con el conjunto de test, lo probaremos.
+
+### 2.  Usar un modelo de Regresión Lineal y aplicar PLA-Pocket como mejora. Responder a las siguientes cuestiones.
+
+```{r}
+#Funcion para calcular el error de muestras
+Error=function(datos, labels, w){
+  (sum(sign(datos%*%w) != labels))/length(labels)
+}
+
+#Algoritmos para Regresión Lineal
+
+#devuelve la pseudoinversa de A
+pseudoInverse1 = function(A){
+  msvd = svd(A)
+  if (length(msvd$d) == 0) {
+    return(array(0, dim(A)[2:1]))
+  }
+  else {
+    return(msvd$v %*% (1/msvd$d * t(msvd$u)))
+  }
+}
+
+#Regression Function
+#datos_trp -> dataset train
+#etiq_trp -> etiquetas correspondientes a cada vector de caracteristicas del dt train
+#
+#devuelve los pesos ajustados
+
+regressLin=function(datos_trp,etiq_trp){
+  pseudoInverse1(datos_trp)%*%etiq_trp
+}
+
+#Algoritmos PLA-pocket
+#Modificando la funcion ajusta_PLA ya implementada en el Ejercicio 2
+# Prec: datos con ultima columna -1
+
+PLA_pocket= function(datos, labels, max_iter=10, vini=c(0,0,0)){
+  w= vini
+  found= F
+  i=0
+  n_rows= nrow(datos)
+  min_err=Error(datos, labels, w)
+  best_w=w
+  
+  while(!found & i<=max_iter){
+    found=T
+    
+    for(j in sample(1:n_rows)){
+      point=datos[j,]
+      
+      if(sign(crossprod(point, w)) != labels[j]){
+        w= w+point*labels[j]
+        found=F
+        break
+      }
+    }
+    
+    if(!found){
+      cur_err= Error(datos,labels,w)
+      
+      if(cur_err < min_err){
+        min_err=cur_err
+        best_w=w
+      }
+    }
+    
+    i=i+1
+  }
+  
+  list(best_w=best_w, iters=i)
+}
+
+```
+
+#### a) Generar gráficos separados (en color) de los datos de entreamiento y test junto con la función estimada.
+
+```{r}
+# simetry of A
+#A -> Matriz
+fsimetria <- function(A){
+  A = abs(A-A[,ncol(A):1])
+  -sum(A)
+}
+
+#PREPARACIÓN DATOS TRAIN
+
+# 1. lectura zip del train (Muestras de 1: 442, Muestras de 5: 157).
+digit.train <- read.table("datos/zip.train", quote="\"", comment.char="", stringsAsFactors=FALSE)
+digitos48.train = digit.train[digit.train$V1==4 | digit.train$V1==8,] #Guardamos en digitos48.train 
+digitos_train = digitos48.train[,1]    # vector de etiquetas del train
+ndigitos_train = nrow(digitos48.train)  # numero de muestras del train
+
+# se retira la clase y se monta una matriz 3D grises_train: 432*16*16
+grises_train = array(unlist(subset(digitos48.train,select=-V1)),c(ndigitos_train,16,16))
+#se borra lo que no es necesario
+rm(digit.train) 
+rm(digitos48.train)
+
+# 2. obtencion de la intensidad del train.
+intensity_train=apply(grises_train,1,mean)
+
+# 3. obtencion de la simetria del train usando la funcion fsimetia
+simetry_train=apply(grises_train, 1, fsimetria)
+remove(grises_train) #rem grises para liberar espacio
+
+# 4. recodificar digitos del train (las etiquetas), las que figuran como 4 son -1, 8 son 1.
+etiq_tr=digitos_train
+etiq_tr[etiq_tr==4]=-1
+etiq_tr[etiq_tr==8]=1
+
+# 5. componer datosTr (adding ind. term)
+datos_tr=as.matrix(cbind(intensity_train,simetry_train, 1))
+
+
+#PREPARACION DATOS TEST
+
+# 6. lectura zip del test (Muestras de 1: 442, Muestras de 5: 157).
+digit.test <- read.table("datos/zip.test", quote="\"", comment.char="", stringsAsFactors=TRUE)
+digitos48.test = digit.test[digit.test$V1==4 | digit.test$V1==8,] #Guardamos en digitos48.test 
+digitos_test = digitos48.test[,1]    # vector de etiquetas del test
+ndigitos_test = nrow(digitos48.test)  # numero de muestras del test
+
+# se retira la clase y se monta una matriz 3D: 49*16*16
+grises_test = array(unlist(subset(digitos48.test,select=-V1)),c(ndigitos_test,16,16))
+rm(digit.test)
+rm(digitos48.test)
+
+# 7. obtencion de la intensidad del test
+intensity_test=apply(grises_test,1,mean)
+
+# 8. obtencion de la simetria del test usando fsimetria
+simetry_test=apply(grises_test, 1, fsimetria)
+remove(grises_test) #rem grises para liberar espacio
+
+# 9. recodificar digitos del test (las etiquetas), las que figuran como 5 son -1
+etiq_test=digitos_test
+etiq_test[etiq_test==4]=-1
+etiq_test[etiq_test==8]=1
+
+# 10. componer datosTst (adding ind. term)
+datos_test=as.matrix(cbind(intensity_test,simetry_test, 1))
+
+#FIN PREPARACION DATOS
+
+#Modelo de RegresiÓn Lineal
+
+#Obtenemos los pesos ajustados con el algoritmo de la pseudoinversa
+wRL=regressLin(datos_tr, etiq_tr)
+
+#trasponemos los datos para poder realizar los siguientes cílculos correctamente
+wRL=t(wRL)
+
+#Con la funcion pasoARecta obtenemos la recta que representa al vector de pesos obtenido (RL)
+lineBonusRL= pasoARecta(wRL)
+
+#APLICANDO PLA-pocket como mejora
+#Aplicamos el algoritmo del PLA-pocket usando los pesos obtenidos con la pseudoinversa como inicio.
+res= PLA_pocket(datos_tr, etiq_tr, 10000, t(wRL))
+wPLAp= res$best_w
+
+#Con la funcion pasoARecta obtenemos la recta que representa al vector de pesos obtenido (PLA-pocket)
+lineBonusPLAp= pasoARecta(wPLAp)
+
+#Pintamos las dos caracteristicas, cada una de un color junto a la recta de RegressLin (train)
+par(mfrow=c(1,2))
+
+plot(datos_tr, col=digitos_train, main="train")
+ abline(lineBonusPLAp[2],lineBonusPLAp[1],col=6)
+
+#test
+plot(datos_test, col=digitos_test, main="test")
+abline(lineBonusPLAp[2],lineBonusPLAp[1],col=6)
+```
+Vemos como el algoritmo PLA-pocket no mejora en nada a nuestro modelo de regresión lineal (pseudoinversa) ya que, considera que los 4 y los 8 son parecidos, y hay muchos puntos entre mezclados es decir, no es capaz de dividir mejor las muestras (dificil/imposible división en dos), al contrario que los 1 y los 5 del trabajo anterior, que eran claramente diferenciables.
+
+
+#### b) Calcular Ein y Eout (error sobre los datos de test).
+
+Una vez pintados tanto el train como el test, calculemos los errores:
+
+```{r}
+#Ein y Eout
+Ein= Error(datos_tr, etiq_tr, wPLAp)
+Eout= Error(datos_test, etiq_test, wPLAp)
+Ein
+Eout
+```
+Se puede ver como el error de la muestra es mas bajo que el error fuera de ella, cosa que es normal. Considero que el modelo (función g hallada) funciona bien dentro de lo que cabe, pero como es normal, no predice perfectamente. 
+Lo que se puede afirmar es que tenemos una muestra de entrenamiento que representa bien la población total de muestras existentes, ya que aproxima bien el conjunto test.
+
+#### c) Obtener cotas sobre el verdadero valor de Eout. Pueden calcularse dos cotas basadas en Ein y otra basada en Eout. Usar una tolerancia delta=0.05 ¿Qué cota es mejor?
+
+```{r}
+#Usando la fórmula de Vapnik-Chervonenkis (sesion 4 de teoría) obtendremos las cotas para Eout.
+
+calcBounds=function(error, dvc, tol, N){
+  error+sqrt(8/N * log((4*((2*N)^dvc+1)/tol), exp(1)))
+}
+
+#Calculamos cota segun ein
+bound_ein=calcBounds(Ein, 3, 0.05, dim(datos_tr)[1])
+
+#Calculamos cota segun eout
+bound_eout=calcBounds(Eout, 3, 0.05, dim(datos_tr)[1])
+
+bound_ein
+bound_eout
+
+```
+Vemos que hemos obtenido una cota de error de 0.924 para Ein y de 1.068 para Eout. La segunda cota viene dada porque, al tener pocos datos de testeo, no esperemos un error menor a 1 con dicha tolerancia, es decir, no tenemos ninguna información nueva.
+Hablando de la cota dada por Ein vemos que el error fuera de la muestra, sera de como mucho 0.92, es decir, limitamos el error esperado.
+Si pudiésemos obtener para una muestra de train bastante mas grande el mismo Ein, el Eout se reduciría bastante.
+
+

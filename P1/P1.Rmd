@@ -1,0 +1,686 @@
+---
+title: "PRACTICA1"
+author: "Juan Emilio García Martínez"
+date: "23 de Marzo de 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+A continuación, se mostrará el resultado de la práctica 1 de Aprendizaje Automático conteniendo tanto el código utilizado para su desarrollo como las valoraciones y decisiones adoptadas en el desarrollo de los apartados.
+
+
+Se establece el directorio de trabajo:
+```{r}
+#setwd("")
+```
+
+Se establece la semilla (aleatorios)
+```{r}
+set.seed(3)
+```
+
+
+
+# Ejercicio 1. EJERCICIO SOBRE LA BÚSQUEDA ITERATIVA DE ÓPTIMOS
+### Graciente Descendente
+
+### 1. Implementación del algoritmo de gradiente descendente.
+
+```{r}
+
+# Función Gradiente Descendente
+# f ->        función
+# f_der ->    array de las derivadas parciales de f
+# w ->        peso inciial, por defecto, (0,0)
+# mu ->       tasa de aprendizaje
+# tol ->      cuando f(punto_actual) < tol, GD para
+# tol_dif ->  umbral tope de diferencia entre punto anterior y nuevo
+# maxIter ->  máximas iteraciones, por defecto, mayor entero soportado
+# Se devuelve el numero de iteraciones y el punto en el que se alcanzó dicho umbral tol
+
+GD=function(f,f_der, start=c(0,0), max_iter=.Machine$integer.max, mu=0.1, tol=1e-14, tol_dif=1e-14){
+  #almacen de pesos calculados a devolver
+  ret_w= matrix(nrow = 0, ncol = 2)
+  
+  #se guardan los pesos para calculos auxiliares
+  wold=start+.Machine$integer.max
+  wnew=start
+  #contador iteraciones
+  it=0
+  
+  #bool para seguir o no
+  continue=TRUE
+  
+  # Mientras no supere max_iter y no supere el umbral tol
+  while(it < max_iter & continue){#& abs(f(pt1)-f(pt2))>u_dif
+    #valor de la funcion E para ambos pesos
+    Eold = f(wold)
+    Enew=f(wnew)
+    
+    if(Enew < tol)
+      continue=FALSE
+    else{
+      wold=wnew
+      
+      #guardamos pesos actuales
+      ret_w=rbind(ret_w, c(wold[1], wold[2]))
+      
+      #calculamos gradiente del punto anterior
+      grdnt=f_der(wold)
+      
+      #punto actual actualizado con el anterior
+      wnew=c(wold[1]-mu*grdnt[1], wold[2]-mu*grdnt[2])
+      
+      it=it+1
+    }
+  }
+  
+  #devolvemos punto actual, en el cual se supero el umbral tol
+  list(ini=start, point=wnew, iters=it, data=ret_w)
+}
+
+```
+
+### 2. Se considera la función $E(u,v)=(u^3*exp(v-2)-4*(v^3)*exp(-u))^2$. Comenzando desde el punto (u,v)=(1,1) y usando una tasa de aprendizaje mu=0.05.
+
+#### a) Calcular analíticamente y mostrar la expresión del gradiente de la función E(u, v)
+
+
+```{r}
+
+# Función E
+# x ->  punto 2D x
+
+E=function(x){
+  (x[1]^3*exp(x[2]-2)-4*(x[2]^3)*exp(-x[1]))^2
+}
+
+```
+
+
+Se calculan las derivadas parciales de la expresión $E(u,v)=(u^3*exp(v-2)-4*(v^3)*exp(-u))^2$ :
+
+$E'(u) = 2*(exp(v-2)*u^3-4*exp(-u)*v^3)*(3*exp(v-2)*u^2+4*exp(-u)*v^3)$
+
+$E'(v) = 2* (exp(v-2)*u^3-12*exp(-u)*v^2)*(exp(v-2)*u^3-4*exp(-u)*v^3)$
+
+
+```{r}
+
+# Función grad (gradiente de E)
+# f ->  funcion a calcular el gradiente
+
+gradE=function(f){
+  c(2* (exp(f[2]-2)* f[1]^3 - 4* exp(-f[1])* f[2]^3)* (3 *exp(f[2]-2)* f[1]^2 + 4* exp(-f[1])* f[2]^3),
+    2* (exp(f[2]-2)* f[1]^3 - 12* exp(-f[1])* f[2]^2)* (exp(f[2]-2)* f[1]^3 - 4* exp(-f[1])* f[2]^3))
+}
+
+```
+
+  
+
+#### b) ¿Cuántas iteraciones tarda el algoritmo en obtener por primera vez un valor de E(u, v) inferior a $10^{???14}$
+
+```{r}
+# Ejecución 2b
+
+start=c(1,1)
+nu=0.05
+
+res2=GD(E,gradE, start, mu=nu, tol=1e-14, tol_dif=1e-14)
+
+print(paste("Iteracion en la que se obtiene un valor de E(u,v) < 1e{-14}: ", res2$iters))
+
+```
+
+#### c)  ¿En qué coordenadas (u, v) se alcanzó por primera vez un valor igual o menor a $10^{???14}$ en el apartado anterior.
+
+```{r}
+# Ejecución 2c
+
+print(paste("Coordenadas (u,v) donde E(u,v) < 1e-14: (u,v)= (", res2$point[1], ", ", res2$point[2], ")"))
+
+```
+
+
+**Conclusión:**
+
+Tarda relativamente poco en encontrar un valor inferior a $10^{-14}$. Por la descripción del ejercicio como tal, el valor de las coordenadas (u,v) encontradas no es el mínimo real, si no que es un valor encontrado "por esa restricción".
+Si incluyéramos la restricción de para cuando la diferencia entre el punto anterior calculado y el actual, si que podríamos acercarnos mas a dicho mínimo, aunque no sea el mínimo exacto.
+
+Si evaluamos E en dichas coordenadas halladas:   
+
+
+```{r}
+print(paste("La evaluacion de E(u,v) es: E(u,v)= ", E(res2$point)))
+```
+
+Podemos ver que el minimo es prácticamente cero, aunque podríamos haber empezado con otro punto inicial y poder haber acabado en otro valor totalmente diferente, es decir, la función podría tener varios mínimos locales. 
+Por supuesto que el valor de dichas coordenadas (u,v) halladas nunca sabremos si es un mínimo local o un mínimo global.  
+Si nos damos cuenta, el establecer la tasa de aprendizaje mu=0.05 ha echo que encontremos dicho valor en un número bajo de iteraciones, si el valor hubiese sido menor, lo normal es que tarde mas, e incluso, si hubiese sido mayor, no nos garantiza que pueda encontrarlo en un número menor de iteraciones ya que puede "pasarse" el mínimo y oscilar, por lo que en vez de acercarse al valor mínimo en cada iteracion, puede que se aleje.
+
+### 3. Se considera la función $f(x,y)=(x - 2)^2 + 2* (y + 2)^2 + 2* sin(2*pi* x)* sin(2*pi* y)$.
+
+```{r}
+
+# Función f
+# x ->  punto 2D x
+
+f=function(x){
+  (x[1] - 2)^2 + 2* (x[2] + 2)^2 + 2* sin(2*pi* x[1])* sin(2*pi* x[2])
+}
+
+
+# Función grad (gradiente de f)
+# f ->  funcion a calcular el gradiente
+
+gradf=function(f){
+  c(2* (-2 + f[1] + 2*pi* cos(2*pi* f[1])* sin(2*pi* f[2])) ,
+    4* (2 + f[2] + pi* cos(2*pi* f[2])* sin(2*pi* f[1])))
+}
+
+```
+
+#### a) Minimizar dicha funcion comentanzo en (x,y)= (1,1) y mu = 0.01 y un máximo de 50 iteraciones. Generar gráfico de cómo desciende el valor de la función con las iteraciones. Repetir experimento con mu=0.1.
+
+Para este ejercicio, se produce una ligera variación en la implementación del gradiente descendente. Esta variación viene por la condición que teniamos en el ejercicio 2 que no tenemos ahora (valor de E(u,v) < 1e-14).
+
+
+```{r}
+#Implementación del GD con es pequeña variacion
+GD=function(f,f_der, start=c(0,0), max_iter=.Machine$integer.max, mu=0.1, tol=1e-14, tol_dif=1e-14){
+  #almacen de pesos calculados a devolver
+  ret_w= matrix(nrow = 0, ncol = 2)
+  
+  #se guardan los pesos para calculos auxiliares
+  wold=start+.Machine$integer.max
+  wnew=start
+  #contador iteraciones
+  it=0
+  
+  #bool para seguir o no
+  continue=TRUE
+  
+  # Mientras no supere max_iter y no supere el umbral tol
+  while(it < max_iter & continue){#& abs(f(pt1)-f(pt2))>u_dif
+    #valor de la funcion E para ambos pesos
+    Eold = f(wold)
+    Enew=f(wnew)
+    
+    if(abs(Eold-Enew) < tol_dif)
+      continue=FALSE
+    else{
+      wold=wnew
+      
+      #guardamos pesos actuales
+      ret_w=rbind(ret_w, c(wold[1], wold[2]))
+      
+      #calculamos gradiente del punto anterior
+      grdnt=f_der(wold)
+      
+      #punto actual actualizado con el anterior
+      wnew=c(wold[1]-mu*grdnt[1], wold[2]-mu*grdnt[2])
+      
+      it=it+1
+    }
+  }
+  
+  #devolvemos punto actual, en el cual se supero el umbral tol
+  list(ini=start, point=wnew, iters=it, data=ret_w)
+}
+
+
+
+#Ejecución del ejercicio 3a: comenzando en (1,1) y mu=0.01
+start=c(1,1)
+nu=0.01
+
+res3=GD(f,gradf, start, max_iter=50, mu=nu, tol=1e-14, tol_dif=1e-14)
+
+#Se guardan los pesos que ha ido calculando
+data1=res3$data
+
+yp1=apply(data1[,], MARGIN = 1, FUN = f)
+
+
+#Pintamos gráfico de como desciende el valor de la función con las iteraciones
+plot(yp1, type="o", main="Ejercicio 3a", xlab="N iters", ylab="f(x,y)")
+
+#Repetimos experimento comenzando en (1,1) y mu=0.1
+nu=0.1
+
+res3=GD(f,gradf, start, max_iter=50, mu=nu, tol=1e-14, tol_dif=1e-14)
+
+#Se guardan los pesos que ha ido calculando
+data2=res3$data
+yp2=apply(data2[,], MARGIN = 1, FUN = f)
+
+#Pintamos gráfico de como desciende el valor de la función con las iteraciones
+plot(yp2, type="o", main="Ejercicio 3a", xlab="N iters", ylab="f(x,y)")
+
+```
+
+**Conclusión:**
+Con la tasa de aprendizaje mu=0.01 se llega al mínimo local muy rápido y no es capaz de salir de este, debido a que la distancia en sus siguiente movimiento es muy pequeña.
+
+Con la tasa de aprendizaje mu=0.1, se salta los mínimos locales, pero no consigue encontrar ninguno, ya que la distancia en sus movimientos es muy grande (oscila demasiado).
+
+#### b)  Obtener el valor mínimo y los valores de las variables (x, y) en donde se alcanzan cuando el punto de inicio se fija: (2.1, -2.1), (3, -3),(1.5, 1.5),(1, -1). Generar una tabla con los valores obtenidos.
+
+```{r}
+#Ejecución ejercicio 3b
+
+#Se guardaran resultados para mostrarlos en una tabla
+res3b=matrix(ncol=6, nrow=0)
+
+#Con tasa nu=0.01
+nu=0.01
+
+#Almacenamos puntos de inicio
+starts=list(c(2.1,-2.1), c(3,-3), c(1.5,1.5), c(1,-1))
+
+#Para cada punto de inicio, vamos guardando en tabla
+for(start in starts){
+  res3=GD(f,gradf, start, max_iter=50, mu=nu, tol=1e-14, tol_dif=1e-14)
+  res3=list(res3$ini[1], res3$ini[2], res3$point[1], res3$point[2], f(res3$point) , res3$iters)
+  res3b=rbind(res3b, res3)
+}
+
+#Cambiamos nombres de columna de la tabla
+dimnames(res3b)=list(c(), c("iniciox","inicioy", "x", "y", "f(x,y)", "iters"))
+
+#imprimimos tabla
+print(res3b)
+```
+
+
+### 4. Conclusión sobre la verdadera dificultad de encontrar el mínimo global de una función arbitraria.
+Encontrar un mínimo global depende del tipo de función en la que se busque, del punto de inicio desde el que se empiece y de la tasa de aprendizaje elegida. Como se puede ver, con el punto de inicio (1.5, 1.5), el algoritmo ha empezado a oscilar de un lado para otro y no ha encontrado nada, sin embargo en los demas casos parece que si que ha dado con alguno de los minimos locales de los varios que parece tener esta función.  
+Como hemos concluido antes en otros ejercicios, el algoritmo, si estableces la tasa de aprendizaje mas alta, o bien puede saltarse mínimos locales para explorar otras zonas y poder encontrar el mínimo global(u otro mínimo local) o incluso puede que esto nunca pase por oscilar demasiado y saltarse los mínimos cuando se aproxima a ellos.  
+Si estableces una tasa de aprendizaje muy pequeña y tienes la suerte de establecer un punto de inicio "bueno", el algoritmo, aunque de manera ineficiente por moverse a velocidades pequeñas en la dirección del gradiente, puede que encuentre el mínimo global. Esta "suerte", en otros algoritmos se establece mediante heurísticas, y ni aun así, se garantiza encontrar el mínimo global.
+
+
+
+# Ejercicio 2. EJERCICIO SOBRE REGRESIÓN LINEAL
+
+### 1. Estimar un modelo de regresión lineal a partir de los datos proporcionados de dichos números, usando tanto el algoritmo de la pseudoinversa como Gradiente descendente estocástico(SGD).  Pintaremos las soluciones obtenidas junto con los datos usados en el ajuste y valoraremos la bondad del resultado usando Ein y Eout.
+
+Primero debemos de cargar correctamente los datos de los archivos que nos proporcionan. Esta preparación implica preparar los datos para el train y para el test.
+
+```{r}
+#PREPARACIÓN DATOS TRAIN
+
+# 1. lectura zip del train (Muestras de 1: 442, Muestras de 5: 157).
+digit.train <- read.table("datos/zip.train", quote="\"", comment.char="", stringsAsFactors=FALSE)
+digitos15.train = digit.train[digit.train$V1==1 | digit.train$V1==5,] #Guardamos en digitos15.train 
+digitos_train = digitos15.train[,1]    # vector de etiquetas del train
+ndigitos_train = nrow(digitos15.train)  # numero de muestras del train
+
+# se retira la clase y se monta una matriz 3D grises_train: 599*16*16
+grises_train = array(unlist(subset(digitos15.train,select=-V1)),c(ndigitos_train,16,16))
+#se borra lo que no es necesario
+rm(digit.train) 
+rm(digitos15.train)
+
+# 2. obtencion de la intensidad del train.
+intensity_train=apply(grises_train,1,mean)
+
+# 3. obtencion de la simetria del train usando la funcion fsimetia
+
+# simetry of A
+#A -> Matriz
+fsimetria <- function(A){
+  A = abs(A-A[,ncol(A):1])
+  -sum(A)
+}
+
+simetry_train=apply(grises_train, 1, fsimetria)
+remove(grises_train) #rem grises para liberar espacio
+
+# 4. recodificar digitos del train (las etiquetas), las que figuran como 5 son -1
+etiq_tr=digitos_train
+etiq_tr[etiq_tr==5]=-1
+
+# 5. componer datosTr (adding ind. term)
+datos_tr=as.matrix(cbind(intensity_train,simetry_train, array(1,ndigitos_train)))
+
+#PREPARACION DATOS TEST
+
+# 6. lectura zip del test (Muestras de 1: 442, Muestras de 5: 157).
+digit.test <- read.table("datos/zip.test", quote="\"", comment.char="", stringsAsFactors=TRUE)
+digitos15.test = digit.test[digit.test$V1==1 | digit.test$V1==5,] #Guardamos en digitos15.test 
+digitos_test = digitos15.test[,1]    # vector de etiquetas del test
+ndigitos_test = nrow(digitos15.test)  # numero de muestras del test
+
+# se retira la clase y se monta una matriz 3D: 49*16*16
+grises_test = array(unlist(subset(digitos15.test,select=-V1)),c(ndigitos_test,16,16))
+rm(digit.test)
+rm(digitos15.test)
+
+# 7. obtencion de la intensidad del test
+intensity_test=apply(grises_test,1,mean)
+
+# 8. obtencion de la simetria del test usando fsimetria
+simetry_test=apply(grises_test, 1, fsimetria)
+remove(grises_test) #rem grises para liberar espacio
+
+# 9. recodificar digitos del test (las etiquetas), las que figuran como 5 son -1
+etiq_test=digitos_test
+etiq_test[etiq_test==5]=-1
+
+# 10. componer datosTst (adding ind. term)
+datos_test=as.matrix(cbind(intensity_test,simetry_test, array(1,ndigitos_test)))
+```
+
+Una vez preparados tanto los dataset del train y del test, podemos pintarlos, cada uno de un color:
+
+```{r}
+#Pintamos las dos caracteristicas, cada una de un color.
+plot(datos_tr, col=digitos_train+2)
+```
+
+Estimación del modelo de regresióm lineal usando el algoritmo de la PseudoInversa:
+
+```{r}
+#Pseudo-inverse of A
+#Calculas la descomposicion singular de A, guardando
+#d, u, v en msvd.
+#Multiplicas, en caso de que la longitud de d no sea 0,
+#v por (la inversa de d * la transpuesta de u)
+#Funcion algo mas lenta(no necesario cargar libreria corpor)
+#
+#devuelve la pseudoinversa de A
+
+pseudoInverse1 = function(A){
+  msvd = svd(A)
+  if (length(msvd$d) == 0) {
+    return(array(0, dim(A)[2:1]))
+  }
+  else {
+    return(msvd$v %*% (1/msvd$d * t(msvd$u)))
+  }
+}
+
+#Regression Function
+#datos_trp -> dataset train
+#etiq_trp -> etiquetas correspondientes a cada vector de caracteristicas del dt train
+#
+#devuelve los pesos ajustados
+
+regressLin=function(datos_trp,etiq_trp){
+  pseudoInverse1(datos_trp)%*%etiq_trp
+}
+
+#Obtenemos los pesos ajustados con el algoritmo de la pseudoinversa
+w=regressLin(datos_tr, etiq_tr)
+#trasponemos los datos para poder realizar los siguientes cálculos correctamente
+w=t(w)
+
+print(w)
+
+```
+
+Hasta aquí tendríamos ya los pesos obtenidos, nos falta predecir ahora con nuestro modelo para ver los aciertos y así poder obtener los errores:
+
+```{r}
+#h Function: función que estima f
+#x -> dt train o dt test
+#w -> pesos con los cuales multiplica x para predecir la etiqueta resultado
+#
+#devuelve las predicciones (y)
+
+h=function(x, wp){
+  sign(wp%*%t(x))
+}
+
+#Predecimos para ver aciertos, tanto del train como del set
+test_pre=h(datos_test, w)
+aciertos_test=length(test_pre[test_pre==etiq_test])
+
+tr_pre=h(datos_tr, w)
+aciertos_tr=length(tr_pre[tr_pre==etiq_tr])
+
+#Una vez calculados los aciertos, calculamos el error tanto fuera como dentro de la muestra
+e_in=1-aciertos_tr/ndigitos_train
+e_out=1-aciertos_test/ndigitos_test
+
+print(paste("El error dentro de la muestra es: ", e_in))
+
+print(paste("El error fuerea de la muestra es: ", e_out))
+
+```
+
+Una vez obtenidos los errores podemos pintar las soluciones obtenidas junto con los datos usados en el ajuste:
+
+
+```{R}
+#pasoARecta Function
+#w -> pesos de los cuales calcularemos dicha recta
+#
+#devuelve los parámetros de la recta calculada
+
+pasoARecta= function(w){
+  if(length(w)!= 3)
+    stop("Solo tiene sentido con 3 pesos")
+  b = -w[1]/w[2]
+  a = -w[3]/w[2]
+  c(a,b)
+}
+
+#Usando la función paso a recta, obtenemos los parámetros de la recta calculada, para así poder graficar bien:
+
+#Obtenemos recta y pintamos datos junto a la recta de separacion del plano
+recta=pasoARecta(w)
+
+#Pintamos las dos gráficas en la misma fila para poder compararlas bien
+par(mfrow=c(1,2))
+
+#Ahora, en la misma escala:
+x=c(-0.9, 0.4)
+
+#pintamos datos train
+plot(datos_tr,col=digitos_train+3, main="TRAIN", xlab="", ylab="", las=1, col.axis="red", xlim = x, ylim = c(min(datos_test[,2]), 0))
+abline(recta[1], recta[2], col="green",lwd=3)
+
+#pintamos datos test
+plot(datos_test,col=digitos_test+3, main="TEST", xlab="", ylab="", las=1, col.axis="red", xlim = x, ylim = c(min(datos_test[,2]), 0))
+abline(recta[1], recta[2],col="green",lwd=3)
+```
+***Conclusión: ***
+El modelo se ajusta casi perfectamente al conjunto train(conjunto entrenamiento) pero no se ajusta igual a los datos de test. Por algún motivo, los datos de test, han sido escogidos de manera anómala.
+
+
+Hasta aquí hemos estimado un modelo de regresión lineal con el algoritmo de la pseudoinversa, procedemos ahora a ajustar el modelo mediante el algoritmo de Gradiente descendente estocástico(SGD).
+
+
+```{r}
+#SGD Function
+#train -> conjunto entrenamiento
+#label -> etiqueta correspondiente a cada vector de características de train
+
+sgd=function(train, label, mu=0.1, u_stop=1e-8, maxIter=10){
+  wini=c(0,0,0)
+  nrows=nrow(train)
+  
+  for (iteration in 1:maxIter) {
+    index=sample(1:nrows, 1 )
+    train_rand=train[index, ]
+    waux=wini
+    pred=wini%*%train_rand
+    
+    for(col in 1:length(wini)){
+      #cat("iteration ",it, " ", wini, "\n")
+      num=-label[index]*train_rand[col]
+      grad = num/(1+exp(label[index]*pred))
+      waux[col]=wini[col]-(mu*grad) 
+    }
+    wini=waux
+  }
+  
+  wini
+}
+
+#Obtenemos pesos, mediante SGD
+w1=sgd(datos_tr, etiq_tr, maxIter =1000)
+
+#Pintamos ahora con los pesos obtenidos del SGD
+par(mfrow=c(1,2))
+recta=pasoARecta(w1)
+plot(datos_tr,col=digitos_train+3, main="TRAIN", xlab="", ylab="", las=1, col.axis="red", xlim = x, ylim = c(min(datos_test[,2]), 0))
+abline(recta[1], recta[2], col="green",lwd=3)
+
+plot(datos_test,col=digitos_test+3, main="TEST", xlab="", ylab="", las=1, col.axis="red", xlim = x, ylim = c(min(datos_test[,2]), 0))
+abline(recta[1], recta[2],col="green",lwd=3)
+
+#Realizamos el mismo procedimiento que con el algoritmo de la pseudoinversa pero con los nuevos pesos hallados w1
+#Predecimos para ver aciertos, tanto del train como del set
+test_pre=h(datos_test, w1)
+aciertos_test=length(test_pre[test_pre==etiq_test])
+
+tr_pre=h(datos_tr, w1)
+aciertos_tr=length(tr_pre[tr_pre==etiq_tr])
+
+#Una vez calculados los aciertos, calculamos el error tanto fuera como dentro de la muestra
+e_in=1-aciertos_tr/ndigitos_train
+e_out=1-aciertos_test/ndigitos_test
+
+print(paste("(SGD)El error dentro de la muestra es: ", e_in))
+
+print(paste("(SGD)El error fuerea de la muestra es: ", e_out))
+
+```
+
+***Conclusión: ***
+He optado por coger, en cada iteración del SGD, un vector de características aleatorio, al probar con muchas iteraciones del SGD, vemos que los errores tanto dentro como fuera de la muestra, son prácticamente igual, por lo que parece que ajusta bien el algoritmo.
+Como es normal, dicho algoritmo realiza mas iteraciones.
+
+
+
+### 2. En este apartado exploramos como cambian los errores tanto dentro de la muestra como fuera cuando aumentamos la complejidad del modelo lineal.
+
+## a)  Generar una muestra de entrenamiento de N = 1000 puntos en el cuadrado X = [-1, 1] × [-1, 1]. Pintar el mapa de puntos 2D.
+```{r}
+#Usamos la función simula_unif para generar dicha muestra
+simula_unif = function (N=2,dims=2, rango = c(0,1)){
+  m = matrix(runif(N*dims, min=rango[1], max=rango[2]),
+             nrow = N, ncol=dims, byrow=T)
+  m
+}
+
+#Generamos la muestra de 1000 puntos
+dataset=simula_unif(1000, 2, c(-1,1))
+
+#Pintamos el mapa de puntos 2D
+plot(dataset, xlab="X", ylab="Y", main="EXPERIMENTO", col=3)
+
+
+```
+
+## b) Consideramos la función $f(x1,x2)=sign((x1-0.2)^2+x~2^2-0.6)$ que usaremos para asignar una etiqueta a cada punto de la muestra anterior. Introducimos ruido sobre las etiquetas cambiando aleatoriamente el signo de un 10% de las mismas. Pintaremos el mapa de etiquetas obtenido.
+
+```{r}
+#Definimos la función
+f=function(x){
+    sign( (x[1]-0.2)^2 + x[2]^2 - 0.6)
+}
+
+
+#Creamos las etiquetas, aplicando la función f a cada fila del dataset creado anteriormente
+etiq_dataset=apply(dataset[,], MARGIN = 1,FUN = f)
+
+#Introducimos ruido en un 10% de las etiquetas
+rows=nrow(dataset)
+indices=sample(1:rows, 0.1*rows)
+etiq_dataset[indices]=-etiq_dataset[indices]
+
+#Pintamos datos
+plot(dataset, xlab="X", ylab="Y", main="EXPERIMENTO", col=etiq_dataset+3)
+```
+
+## c)  Usando como vector de características (1, x1, x2) ajustar un modelo de regresion lineal al conjunto de datos generado y estimar los pesos w. Estimar el error de ajuste E in usando Gradiente Descendente Estocástico (SGD).
+```{r}
+#Creamos dataset de características
+feats=cbind(1, dataset)
+
+#Ajustamos el modelo de regresión lineal al conjunto de características y estimamos w
+w2=sgd(feats, etiq_dataset, maxIter = 2000)
+
+#Pintamos conjunto de características y la recta de ajuste
+par(mfrow=c(1,1))
+recta=pasoARecta(w2)
+
+plot(dataset,col=etiq_dataset+3, main="TRAIN", xlab="", ylab="", las=1, col.axis="red")
+abline(recta[1], recta[2], col="green",lwd=3)
+
+#Calculamos error Ein
+pre=h(x = feats, wp = w2)
+aciertos=length(pre[pre==etiq_dataset])
+e_in=1-aciertos/length(etiq_dataset)
+
+print(paste("El error fuera de la muestra es: ", e_in))
+
+```
+
+## d) Ejecutaremos todo el experimento realizado 1000 veces(1000 muestras) y calcularemos el error medio de los errores de las 1000 muestras y generando 1000 puntos nuevos por cada iteración, calcularemos con ellos el error fuera de la muestra en dicha iteración. Calcularemos el error Eout medio.
+
+```{r}
+#Función que realiza un experimento
+
+doExp = function(N=1000){
+  data=simula_unif(N, 2, c(-1,1))
+  etiq_dataset=apply(dataset[,], MARGIN = 1,FUN = f)
+  
+  rows=nrow(dataset)
+  indices=sample(1:rows, 0.1*rows)
+  etiq_dataset[indices]=-etiq_dataset[indices]
+  
+  feats=cbind(1, dataset)
+  w3=sgd(feats, etiq_dataset, maxIter = 1000)
+  
+  pre=h(x = feats, wp = w3)
+  aciertos=length(pre[pre==etiq_dataset])
+  e_in=1-aciertos/length(etiq_dataset)
+  
+  dataset_out=simula_unif(N, 2, c(-1,1))
+  etiq_out=apply(dataset_out[,], MARGIN = 1,FUN = f)
+  rows=nrow(dataset_out)
+  indices=sample(1:rows, 0.1*rows)
+  etiq_out[indices]=-etiq_out[indices]
+  
+  feats_out=cbind(1, dataset_out)
+  w_out=sgd(feats_out, etiq_out, maxIter = 1000)
+  
+  pre_out=h(x = feats_out, wp = w_out)
+  aciertos_out=length(pre_out[pre_out==etiq_out])
+  e_out=1-aciertos_out/length(etiq_out)
+  
+  c(e_in, e_out)
+}
+
+#Veces establecidas a realizar el experimento (por defecto 1000)
+veces=1000
+
+#Almacén de los errores
+resExp=matrix(nrow = veces, ncol=2)
+
+#Realizamos el experimento 1000 veces, guardando los errores
+for(i in 1:veces){
+  resExp[i, ]= doExp()
+}
+
+#Calculamos los errores medios de Ein y Eout
+meanEinExp= mean(resExp[, 1])
+meanEoutExp= mean(resExp[, 2])
+
+print(paste("El error medio dentro de la muestra es: ", meanEinExp))
+print(paste("El error medio fuera de la muestra es: ", meanEoutExp))
+```
+
+
+***Conclusion:*** el ajuste con este modelo lineal no es bueno ya que el error con los datos de la muestra es demasiado grande Como es logico, el Eout(fuera de la muestra) es mayor todavia Se puede concluir diciendo que, o bien se puede cambiar el tipo de h elegida o se podria hacer una transformacion a una no lineal(características), ya que, como se puede ver en la gráfica de salida, se podría realizar una transformación no lineal añadiendo características que ya tenemos pero elevandolas al cuadrado por ejemplo, así podríamos ajustar mucho mejor este modelo.
+
+
+
